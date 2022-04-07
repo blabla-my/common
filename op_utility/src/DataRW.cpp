@@ -568,6 +568,51 @@ int TimeStampedPathReader::ReadAllData(vector<TimePoint>& data_list)
 	return count;
 }
 
+//NCKU Dataset Trajectory Reader
+
+bool DatasetTrajectoryReader::ReadNextLine(TimePoint& data)
+{
+	vector<vector<string> > lineData;
+	if(ReadSingleLine(lineData))
+	{
+		if(lineData.size()==0) return false;
+		if(lineData.at(0).size() < 6) return false;
+
+		data.t = strtod(lineData.at(0).at(0).c_str(), NULL);
+		data.x = strtod(lineData.at(0).at(1).c_str(), NULL);
+		data.y = strtod(lineData.at(0).at(2).c_str(), NULL);
+		data.roll = strtod(lineData.at(0).at(3).c_str(), NULL);
+		data.pitch = strtod(lineData.at(0).at(4).c_str(), NULL);
+		data.yaw = strtod(lineData.at(0).at(5).c_str(), NULL);
+		data.z = strtod(lineData.at(0).at(6).c_str(), NULL);
+
+		return true;
+
+	}
+	else
+		return false;
+}
+
+int DatasetTrajectoryReader::ReadAllData()
+{
+	return 0;
+}
+
+int DatasetTrajectoryReader::ReadAllData(vector<TimePoint>& data_list)
+{
+	if(!m_File.is_open()) return 0;
+	data_list.clear();
+	TimePoint data;
+	//double logTime = 0;
+	int count = 0;
+	while(ReadNextLine(data))
+	{
+		data_list.push_back(data);
+		count++;
+	}
+	return count;
+}
+
 
 // Destinations data
 
