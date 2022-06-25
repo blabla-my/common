@@ -1,14 +1,13 @@
 #include "region_layer.h"
-
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
 #include "activations.h"
 #include "blas.h"
 #include "box.h"
 #include "dark_cuda.h"
 #include "utils.h"
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define DOABS 1
 
@@ -21,6 +20,10 @@ region_layer make_region_layer(int batch, int w, int h, int n, int classes, int 
     l.batch = batch;
     l.h = h;
     l.w = w;
+    l.c = n*(classes + coords + 1);
+    l.out_w = l.w;
+    l.out_h = l.h;
+    l.out_c = l.c;
     l.classes = classes;
     l.coords = coords;
     l.cost = (float*)xcalloc(1, sizeof(float));

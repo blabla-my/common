@@ -1,10 +1,9 @@
 #include "sam_layer.h"
-
+#include "utils.h"
+#include "dark_cuda.h"
+#include "blas.h"
 #include <stdio.h>
 #include <assert.h>
-#include "blas.h"
-#include "dark_cuda.h"
-#include "utils.h"
 
 layer make_sam_layer(int batch, int index, int w, int h, int c, int w2, int h2, int c2)
 {

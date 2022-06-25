@@ -1,9 +1,8 @@
 #include "route_layer.h"
-
-#include <stdio.h>
-#include "blas.h"
-#include "dark_cuda.h"
 #include "utils.h"
+#include "dark_cuda.h"
+#include "blas.h"
+#include <stdio.h>
 
 route_layer make_route_layer(int batch, int n, int *input_layers, int *input_sizes, int groups, int group_id)
 {
@@ -16,6 +15,7 @@ route_layer make_route_layer(int batch, int n, int *input_layers, int *input_siz
     l.input_sizes = input_sizes;
     l.groups = groups;
     l.group_id = group_id;
+    l.wait_stream_id = -1;
     int i;
     int outputs = 0;
     for(i = 0; i < n; ++i){

@@ -1,7 +1,7 @@
-#include "cost_layer.h"
 #include "network.h"
-#include "parser.h"
+#include "cost_layer.h"
 #include "utils.h"
+#include "parser.h"
 
 void extract_voxel(char *lfile, char *rfile, char *prefix)
 {

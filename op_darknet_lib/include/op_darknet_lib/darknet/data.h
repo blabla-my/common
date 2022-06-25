@@ -3,9 +3,10 @@
 #include <pthread.h>
 
 #include "darknet.h"
-#include "image.h"
-#include "list.h"
+#include "darknet.h"
 #include "matrix.h"
+#include "list.h"
+#include "image.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

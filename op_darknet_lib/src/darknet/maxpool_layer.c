@@ -1,10 +1,9 @@
 #include "maxpool_layer.h"
-
-#include <stdio.h>
 #include "convolutional_layer.h"
 #include "dark_cuda.h"
-#include "gemm.h"
 #include "utils.h"
+#include "gemm.h"
+#include <stdio.h>
 
 image get_maxpool_image(maxpool_layer l)
 {

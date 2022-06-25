@@ -1,4 +1,3 @@
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -274,7 +273,7 @@ image **load_alphabet()
         alphabets[j] = (image*)xcalloc(128, sizeof(image));
         for(i = 32; i < 127; ++i){
             char buff[256];
-            sprintf(buff, "/home/hatem/carla_board/team_agent/autoware-openplanner/src/autoware/core_perception/op_tlr/darknet/data/labels/%d_%d.png", i, j);
+            sprintf(buff, "data/labels/%d_%d.png", i, j);
             alphabets[j][i] = load_image_color(buff, 0, 0);
         }
     }
@@ -282,9 +281,6 @@ image **load_alphabet()
 }
 
 
-
-//old function that uses "names" to distable showing the results for some names which is not needed
-//detection_with_class* get_actual_detections(detection *dets, int dets_num, float thresh, int* selected_detections_num, char **names)
 
 // Creates array of detections with prob > thresh and fills best_class for them
 detection_with_class* get_actual_detections(detection *dets, int dets_num, float thresh, int* selected_detections_num)
@@ -297,8 +293,7 @@ detection_with_class* get_actual_detections(detection *dets, int dets_num, float
         float best_class_prob = thresh;
         int j;
         for (j = 0; j < dets[i].classes; ++j) {
-//            int show = strncmp(names[j], "dont_show", 9);
-        	int show = 1;
+            int show = 1; // = strncmp(names[j], "dont_show", 9);
             if (dets[i].prob[j] > best_class_prob && show) {
                 best_class = j;
                 best_class_prob = dets[i].prob[j];
@@ -1356,7 +1351,7 @@ void make_image_red(image im)
     }
 }
 
-image make_attention_image(int img_size, float *original_delta_cpu, float *original_input_cpu, int w, int h, int c)
+image make_attention_image(int img_size, float *original_delta_cpu, float *original_input_cpu, int w, int h, int c, float alpha)
 {
     image attention_img;
     attention_img.w = w;
@@ -1384,7 +1379,7 @@ image make_attention_image(int img_size, float *original_delta_cpu, float *origi
     image resized = resize_image(attention_img, w / 4, h / 4);
     attention_img = resize_image(resized, w, h);
     free_image(resized);
-    for (k = 0; k < img_size; ++k) attention_img.data[k] += original_input_cpu[k];
+    for (k = 0; k < img_size; ++k) attention_img.data[k] = attention_img.data[k]*alpha + (1-alpha)*original_input_cpu[k];
 
     //normalize_image(attention_img);
     //show_image(attention_img, "delta");

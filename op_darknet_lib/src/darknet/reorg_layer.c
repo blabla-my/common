@@ -1,9 +1,8 @@
 #include "reorg_layer.h"
-
-#include <stdio.h>
-#include "blas.h"
 #include "dark_cuda.h"
+#include "blas.h"
 #include "utils.h"
+#include <stdio.h>
 
 
 layer make_reorg_layer(int batch, int w, int h, int c, int stride, int reverse)

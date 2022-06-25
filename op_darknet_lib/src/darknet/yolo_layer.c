@@ -1,15 +1,15 @@
 #include "yolo_layer.h"
+#include "activations.h"
+#include "blas.h"
+#include "box.h"
+#include "dark_cuda.h"
+#include "utils.h"
 
 #include <math.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "activations.h"
-#include "blas.h"
-#include "box.h"
-#include "dark_cuda.h"
-#include "utils.h"
 
 extern int check_mistakes;
 
@@ -727,7 +727,7 @@ void forward_yolo_layer(const layer l, network_state state)
         yolo_args[b].count = 0;
         yolo_args[b].class_count = 0;
 
-        if (pthread_create(&threads[b], 0, process_batch, &(yolo_args[b]))) error("Thread creation failed");
+        if (pthread_create(&threads[b], 0, process_batch, &(yolo_args[b]))) error("Thread creation failed", DARKNET_LOC);
     }
 
     for (b = 0; b < l.batch; b++)

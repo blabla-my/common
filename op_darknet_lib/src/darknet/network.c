@@ -1,42 +1,43 @@
-#include "network.h"
+#include "darknet.h"
 
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
 
-#include "darknet.h"
-#include "activation_layer.h"
-#include "avgpool_layer.h"
-#include "batchnorm_layer.h"
-#include "blas.h"
-#include "connected_layer.h"
-#include "conv_lstm_layer.h"
-#include "convolutional_layer.h"
-#include "cost_layer.h"
-#include "crnn_layer.h"
-#include "crop_layer.h"
-#include "data.h"
-#include "detection_layer.h"
-#include "dropout_layer.h"
-#include "gaussian_yolo_layer.h"
-#include "gru_layer.h"
+#include "network.h"
 #include "image.h"
+#include "data.h"
+#include "utils.h"
+#include "blas.h"
+
+#include "crop_layer.h"
+#include "connected_layer.h"
+#include "gru_layer.h"
+#include "rnn_layer.h"
+#include "crnn_layer.h"
+#include "conv_lstm_layer.h"
 #include "local_layer.h"
-#include "maxpool_layer.h"
-#include "normalization_layer.h"
-#include "parser.h"
+#include "convolutional_layer.h"
+#include "activation_layer.h"
+#include "detection_layer.h"
 #include "region_layer.h"
+#include "normalization_layer.h"
+#include "batchnorm_layer.h"
+#include "maxpool_layer.h"
 #include "reorg_layer.h"
 #include "reorg_old_layer.h"
-#include "rnn_layer.h"
-#include "route_layer.h"
-#include "sam_layer.h"
-#include "scale_channels_layer.h"
-#include "shortcut_layer.h"
+#include "avgpool_layer.h"
+#include "cost_layer.h"
 #include "softmax_layer.h"
-#include "upsample_layer.h"
-#include "utils.h"
+#include "dropout_layer.h"
+#include "route_layer.h"
+#include "shortcut_layer.h"
+#include "scale_channels_layer.h"
+#include "sam_layer.h"
 #include "yolo_layer.h"
+#include "gaussian_yolo_layer.h"
+#include "upsample_layer.h"
+#include "parser.h"
 
 load_args get_base_args(network *net)
 {
@@ -272,7 +273,7 @@ void forward_network(network net, network_state state)
     for(i = 0; i < net.n; ++i){
         state.index = i;
         layer l = net.layers[i];
-        if(l.delta && state.train){
+        if(l.delta && state.train && l.train){
             scal_cpu(l.outputs * l.batch, 0, l.delta, 1);
         }
         //double time = get_time_point();
@@ -296,6 +297,7 @@ void update_network(network net)
     float rate = get_current_rate(net);
     for(i = 0; i < net.n; ++i){
         layer l = net.layers[i];
+        if (l.train == 0) continue;
         if(l.update){
             l.update(l, update_batch, rate, net.momentum, net.decay);
         }
@@ -517,9 +519,9 @@ int recalculate_workspace_size(network *net)
 
 #ifdef GPU
     if (gpu_index >= 0) {
-        //printf("\n try to allocate additional workspace_size = %1.2f MB \n", (float)workspace_size / 1000000);
+        printf("\n try to allocate additional workspace_size = %1.2f MB \n", (float)workspace_size / 1000000);
         net->workspace = cuda_make_array(0, workspace_size / sizeof(float) + 1);
-        //printf(" CUDA allocate done! \n");
+        printf(" CUDA allocate done! \n");
     }
     else {
         free(net->workspace);
@@ -637,7 +639,7 @@ int resize_network(network *net, int w, int h)
             resize_cost_layer(&l, inputs);
         }else{
             fprintf(stderr, "Resizing type %d \n", (int)l.type);
-            error("Cannot resize this type of layer");
+            error("Cannot resize this type of layer", DARKNET_LOC);
         }
         if(l.workspace_size > workspace_size) workspace_size = l.workspace_size;
         inputs = l.outputs;
@@ -883,7 +885,13 @@ void custom_get_region_detections(layer l, int w, int h, int net_w, int net_h, f
         dets[j].classes = l.classes;
         dets[j].bbox = boxes[j];
         dets[j].objectness = 1;
+        float highest_prob = 0;
+        dets[j].best_class_idx = -1;
         for (i = 0; i < l.classes; ++i) {
+            if (probs[j][i] > highest_prob) {
+            	highest_prob = probs[j][i];
+            	dets[j].best_class_idx = i;
+            }
             dets[j].prob[i] = probs[j][i];
         }
     }
@@ -1457,6 +1465,7 @@ void copy_weights_net(network net_train, network *net_map)
         }
         net_map->layers[k].batch = 1;
         net_map->layers[k].steps = 1;
+        net_map->layers[k].train = 0;
     }
 }
 

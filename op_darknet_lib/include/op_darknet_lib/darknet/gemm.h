@@ -1,9 +1,8 @@
 #ifndef GEMM_H
 #define GEMM_H
+#include "activations.h"
 #include <stdint.h>
 #include <stddef.h>
-
-#include "activations.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

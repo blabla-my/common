@@ -1,9 +1,8 @@
 #include "dropout_layer.h"
-
+#include "utils.h"
+#include "dark_cuda.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "dark_cuda.h"
-#include "utils.h"
 
 dropout_layer make_dropout_layer(int batch, int inputs, float probability, int dropblock, float dropblock_size_rel, int dropblock_size_abs, int w, int h, int c)
 {

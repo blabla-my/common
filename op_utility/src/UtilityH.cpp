@@ -240,9 +240,76 @@ time_t UtilityH::GetLongTime(const struct timespec& srcT)
 	return dstT;
 }
 
-void UtilityH::GetFileNameInFolder(const std::string& path, const std::string& extention, std::vector<std::string>& out_list)
+void UtilityH::GetFileNameInAllSubfolders(const std::string& in_path, const std::vector<std::string>& extentions, std::vector<std::string>& out_list, int dir_level)
 {
-	out_list.clear();
+	std::string path = in_path;
+	if(path.at(path.size()-1) != '/')
+	{
+		path.push_back('/');
+	}
+
+	DIR *dir = opendir (path.c_str());
+
+	if(dir == NULL || dir_level > 3) return;
+
+	struct dirent *ent = NULL;
+
+	while ((ent = readdir (dir)) != NULL)
+	{
+		std::string d_name(ent->d_name);
+		if(ent->d_type == DT_DIR && d_name.compare(".") != 0 && d_name.compare("..") != 0)
+		{
+			GetFileNameInFolder(path + d_name, extentions, out_list);
+
+			GetFileNameInAllSubfolders(path + d_name, extentions, out_list, dir_level+1);
+		}
+	}
+
+	closedir (dir);
+}
+
+void UtilityH::GetImageNamesInAllSubfoldersCam1Cam2(const std::string& in_path, const std::vector<std::string>& extentions, std::vector<std::string>& out_list, int dir_level)
+{
+	std::string path = in_path;
+	if(path.at(path.size()-1) != '/')
+	{
+		path.push_back('/');
+	}
+
+	DIR *dir = opendir (path.c_str());
+
+	if(dir == NULL || dir_level > 3) return;
+
+	struct dirent *ent = NULL;
+
+	while ((ent = readdir (dir)) != NULL)
+	{
+		std::string d_name(ent->d_name);
+		if(ent->d_type == DT_DIR && d_name.compare(".") != 0 && d_name.compare("..") != 0)
+		{
+//			std::cout << "Level: " << dir_level << ", Type: " << (ent->d_type == DT_DIR) << ", Name: " << d_name << std::endl;
+
+			if(dir_level >= 1 && (d_name.compare("Camera1") == 0 || d_name.compare("Camera2") == 0))
+			{
+				GetFileNameInFolder(path + d_name, extentions, out_list);
+			}
+
+			GetImageNamesInAllSubfoldersCam1Cam2(path + d_name, extentions, out_list, dir_level+1);
+		}
+	}
+
+	closedir (dir);
+}
+
+void UtilityH::GetFileNameInFolder(const std::string& in_path, const std::vector<std::string>& extentions, std::vector<std::string>& out_list, bool bFullPath)
+{
+	std::string path = in_path;
+
+	if(path.at(path.size()-1) != '/')
+	{
+		path.push_back('/');
+	}
+
 	DIR *dir;
 	struct dirent *ent;
 	if ((dir = opendir (path.c_str())) != NULL)
@@ -256,20 +323,31 @@ void UtilityH::GetFileNameInFolder(const std::string& path, const std::string& e
 		{
 			file_extention = str.substr(index_last, str.size());
 		}
-		std::string ext = extention;
-		for(auto& c : ext)
-		{
-			c = std::toupper(c);
-		}
 
 		for(auto& c : file_extention)
 		{
 			c = std::toupper(c);
 		}
 
-		if(file_extention.compare(ext) == 0)
+		for(auto& e: extentions)
 		{
-			out_list.push_back(path+str);
+			std::string ext = e;
+			for(auto& c : ext)
+			{
+				c = std::toupper(c);
+			}
+
+			if(file_extention.compare(ext) == 0)
+			{
+				if(bFullPath)
+				{
+					out_list.push_back(path+str);
+				}
+				else
+				{
+					out_list.push_back(str);
+				}
+			}
 		}
 	  }
 	  closedir (dir);

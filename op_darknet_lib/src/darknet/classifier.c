@@ -1,13 +1,11 @@
-#include "classifier.h"
-
-#include "assert.h"
-
-#include "blas.h"
-#include "dark_cuda.h"
 #include "network.h"
-#include "option_list.h"
-#include "parser.h"
 #include "utils.h"
+#include "parser.h"
+#include "option_list.h"
+#include "blas.h"
+#include "assert.h"
+#include "classifier.h"
+#include "dark_cuda.h"
 #ifdef WIN32
 #include <time.h>
 #include "gettimeofday.h"
@@ -1053,7 +1051,7 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
 
     int* indexes = (int*)xcalloc(top, sizeof(int));
 
-    if(!cap) error("Couldn't connect to webcam.\n");
+    if(!cap) error("Couldn't connect to webcam.", DARKNET_LOC);
     create_window_cv("Threat", 0, 512, 512);
     float fps = 0;
     int i;
@@ -1192,7 +1190,7 @@ void gun_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
 
     int* indexes = (int*)xcalloc(top, sizeof(int));
 
-    if(!cap) error("Couldn't connect to webcam.\n");
+    if(!cap) error("Couldn't connect to webcam.", DARKNET_LOC);
     cvNamedWindow("Threat Detection", CV_WINDOW_NORMAL);
     cvResizeWindow("Threat Detection", 512, 512);
     float fps = 0;
@@ -1276,7 +1274,7 @@ void demo_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_ind
 
     int* indexes = (int*)xcalloc(top, sizeof(int));
 
-    if(!cap) error("Couldn't connect to webcam.\n");
+    if(!cap) error("Couldn't connect to webcam.", DARKNET_LOC);
     if (!benchmark) create_window_cv("Classifier", 0, 512, 512);
     float fps = 0;
     int i;

@@ -1,11 +1,10 @@
 #include "matrix.h"
-
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
-#include "utils.h"
 
 void free_matrix(matrix m)
 {

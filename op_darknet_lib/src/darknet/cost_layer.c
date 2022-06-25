@@ -1,12 +1,11 @@
 #include "cost_layer.h"
-
+#include "utils.h"
+#include "dark_cuda.h"
+#include "blas.h"
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "blas.h"
-#include "dark_cuda.h"
-#include "utils.h"
 
 COST_TYPE get_cost_type(char *s)
 {

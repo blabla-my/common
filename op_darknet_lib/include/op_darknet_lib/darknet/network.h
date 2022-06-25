@@ -1,13 +1,14 @@
 // Oh boy, why am I about to do this....
 #ifndef NETWORK_H
 #define NETWORK_H
-#include <stdint.h>
-#include "image.h"
-
 #include "darknet.h"
-#include "data.h"
-#include "image.h"
+
+#include <stdint.h>
 #include "layer.h"
+
+
+#include "image.h"
+#include "data.h"
 #include "tree.h"
 
 #ifdef __cplusplus

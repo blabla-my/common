@@ -1,10 +1,10 @@
-#include "box.h"
-#include "cost_layer.h"
-#include "demo.h"
-#include "detection_layer.h"
 #include "network.h"
-#include "parser.h"
+#include "detection_layer.h"
+#include "cost_layer.h"
 #include "utils.h"
+#include "parser.h"
+#include "box.h"
+#include "demo.h"
 
 char *voc_names[] = {"aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"};
 

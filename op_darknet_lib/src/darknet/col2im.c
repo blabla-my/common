@@ -1,8 +1,7 @@
-#include "col2im.h"
-
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "col2im.h"
 void col2im_add_pixel(float *im, int height, int width, int channels,
                         int row, int col, int channel, int pad, float val)
 {

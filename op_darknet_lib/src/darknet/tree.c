@@ -1,10 +1,8 @@
-#include "tree.h"
-
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "data.h"
+#include "tree.h"
 #include "utils.h"
+#include "data.h"
 
 void change_leaves(tree *t, char *leaf_list)
 {

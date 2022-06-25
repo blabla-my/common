@@ -28,10 +28,9 @@ int compare_by_lefts(const void *a_ptr, const void *b_ptr) {
 }
 
 template <class T>
-std::vector<DetectedObjClass<T> > DarknetDetector<T>::DetectObjects(IplImage& src_img)
+std::vector<DetectedObjClass<T> > DarknetDetector<T>::DetectObjects(cv::Mat& src_img)
 {
-	image img = ipl_to_image(&src_img);
-	exposure_image(img, 0.75);
+	image img = mat_to_image(src_img);
 	image img_resized = resize_image(img, m_net.w, m_net.h);
 
 	layer l = m_net.layers[m_net.n-1];
@@ -50,9 +49,16 @@ std::vector<DetectedObjClass<T> > DarknetDetector<T>::DetectObjects(IplImage& sr
 	int nboxes = 0;
 	detection *dets = get_network_boxes(&m_net, img.w, img.h, m_params.detect_threshold, 0.5, 0, 1, &nboxes, 0);
 
-	do_nms_sort(dets, nboxes, l.classes, 0.45);
+	if (l.nms_kind == DEFAULT_NMS)
+	{
+		do_nms_sort(dets, nboxes, l.classes, 0.45);
+	}
+	else
+	{
+		diounms_sort(dets, nboxes, l.classes, 0.45, l.nms_kind, l.beta_nms);
+	}
 
-	int selected_detections_num;
+	int selected_detections_num = 0;
 	detection_with_class* selected_detections = get_actual_detections(dets, nboxes, m_params.detect_threshold, &selected_detections_num);
 	qsort(selected_detections, selected_detections_num, sizeof(*selected_detections), compare_by_lefts);
 
@@ -62,21 +68,24 @@ std::vector<DetectedObjClass<T> > DarknetDetector<T>::DetectObjects(IplImage& sr
 		const int best_class = selected_detections[i].best_class;
 		DetectedObjClass<T> _c;
 		_c.score = selected_detections[i].det.prob[best_class];
+
 		_c.class_type_id = best_class;
 //		_c.type = TL_CLASS_TYPE_STR.GetEnum(_c.class_type_id);
 		_c.bottom_left.x = (selected_detections[i].det.bbox.x-(selected_detections[i].det.bbox.w/2.0))*(double)img.w;
 		_c.bottom_left.y = (selected_detections[i].det.bbox.y+(selected_detections[i].det.bbox.h/2.0))*(double)img.h;
 		_c.top_right.x = (selected_detections[i].det.bbox.x+(selected_detections[i].det.bbox.w/2.0))*(double)img.w;
 		_c.top_right.y = (selected_detections[i].det.bbox.y-(selected_detections[i].det.bbox.h/2.0))*(double)img.h;
+
+		_c.poly_contour.push_back(PlannerHNS::WayPoint(_c.bottom_left.x, _c.bottom_left.y, 0, 0));
+		_c.poly_contour.push_back(PlannerHNS::WayPoint(_c.top_right.x, _c.bottom_left.y, 0, 0));
+		_c.poly_contour.push_back(PlannerHNS::WayPoint(_c.top_right.x, _c.top_right.y, 0, 0));
+		_c.poly_contour.push_back(PlannerHNS::WayPoint(_c.bottom_left.x, _c.top_right.y, 0, 0));
+
 		_c.width = selected_detections[i].det.bbox.w * (double)img.w;
 		_c.height = selected_detections[i].det.bbox.h * (double)img.h;
 		_c.center_x = _c.bottom_left.x;
 		_c.center_y = _c.top_right.y;
-		//std::cout << m_classes_names[best_class] << ": " << selected_detections[i].det.prob[best_class] * 100 << "% , (" << _c.width << ", " << _c.height << ")" <<  std::endl;
-		if(_c.width > 5 && _c.height > 7 && _c.bottom_left.y < (img.h - 100))
-		{
-			detections.push_back(_c);
-		}
+		detections.push_back(_c);
 	}
 
 	free_detections(dets, nboxes);
@@ -85,8 +94,8 @@ std::vector<DetectedObjClass<T> > DarknetDetector<T>::DetectObjects(IplImage& sr
 	return detections;
 }
 
-template std::vector<DetectedObjClass<TL_CLASS_TYPE> > DarknetDetector<TL_CLASS_TYPE>::DetectObjects(IplImage& src_img);
-template std::vector<DetectedObjClass<MAP_CLASS_TYPE> > DarknetDetector<MAP_CLASS_TYPE>::DetectObjects(IplImage& src_img);
+template std::vector<DetectedObjClass<TL_CLASS_TYPE> > DarknetDetector<TL_CLASS_TYPE>::DetectObjects(cv::Mat& src_img);
+template std::vector<DetectedObjClass<MAP_CLASS_TYPE> > DarknetDetector<MAP_CLASS_TYPE>::DetectObjects(cv::Mat& src_img);
 
 }
 

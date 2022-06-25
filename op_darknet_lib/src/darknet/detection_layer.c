@@ -1,15 +1,14 @@
 #include "detection_layer.h"
-
+#include "activations.h"
+#include "softmax_layer.h"
+#include "blas.h"
+#include "box.h"
+#include "dark_cuda.h"
+#include "utils.h"
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "activations.h"
-#include "blas.h"
-#include "box.h"
-#include "dark_cuda.h"
-#include "softmax_layer.h"
-#include "utils.h"
 
 detection_layer make_detection_layer(int batch, int inputs, int n, int side, int classes, int coords, int rescore)
 {

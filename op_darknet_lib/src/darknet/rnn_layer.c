@@ -1,14 +1,14 @@
 #include "rnn_layer.h"
+#include "connected_layer.h"
+#include "utils.h"
+#include "dark_cuda.h"
+#include "blas.h"
+#include "gemm.h"
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "blas.h"
-#include "connected_layer.h"
-#include "dark_cuda.h"
-#include "gemm.h"
-#include "utils.h"
 
 static void increment_layer(layer *l, int steps)
 {

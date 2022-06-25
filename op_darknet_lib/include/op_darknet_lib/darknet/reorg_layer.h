@@ -1,8 +1,8 @@
 #ifndef REORG_LAYER_H
 #define REORG_LAYER_H
 
-#include "dark_cuda.h"
 #include "image.h"
+#include "dark_cuda.h"
 #include "layer.h"
 #include "network.h"
 

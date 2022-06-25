@@ -1,8 +1,8 @@
-#include "blas.h"
-#include "cost_layer.h"
 #include "network.h"
-#include "parser.h"
+#include "cost_layer.h"
 #include "utils.h"
+#include "parser.h"
+#include "blas.h"
 
 #ifdef OPENCV
 void reconstruct_picture(network net, float *features, image recon, image update, float rate, float momentum, float lambda, int smooth_size, int iters);

@@ -1,6 +1,6 @@
 #include "network.h"
-#include "parser.h"
 #include "utils.h"
+#include "parser.h"
 
 void train_tag(char *cfgfile, char *weightfile, int clear)
 {

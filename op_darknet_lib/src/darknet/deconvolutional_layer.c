@@ -1,13 +1,12 @@
 #include "deconvolutional_layer.h"
-
+#include "convolutional_layer.h"
+#include "utils.h"
+#include "im2col.h"
+#include "col2im.h"
+#include "blas.h"
+#include "gemm.h"
 #include <stdio.h>
 #include <time.h>
-#include "blas.h"
-#include "col2im.h"
-#include "convolutional_layer.h"
-#include "gemm.h"
-#include "im2col.h"
-#include "utils.h"
 
 int deconvolutional_out_height(deconvolutional_layer l)
 {

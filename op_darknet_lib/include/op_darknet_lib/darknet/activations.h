@@ -1,9 +1,8 @@
 #ifndef ACTIVATIONS_H
 #define ACTIVATIONS_H
-#include "math.h"
-
 #include "darknet.h"
 #include "dark_cuda.h"
+#include "math.h"
 #include "utils.h"
 
 //typedef enum{

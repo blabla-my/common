@@ -1,12 +1,11 @@
 #include "shortcut_layer.h"
-
-#include <stdio.h>
-#include <assert.h>
-#include "blas.h"
 #include "convolutional_layer.h"
 #include "dark_cuda.h"
-#include "gemm.h"
+#include "blas.h"
 #include "utils.h"
+#include "gemm.h"
+#include <stdio.h>
+#include <assert.h>
 
 layer make_shortcut_layer(int batch, int n, int *input_layers, int* input_sizes, int w, int h, int c,
     float **layers_output, float **layers_delta, float **layers_output_gpu, float **layers_delta_gpu, WEIGHTS_TYPE_T weights_type, WEIGHTS_NORMALIZATION_T weights_normalization,

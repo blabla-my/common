@@ -1,4 +1,5 @@
 #include "blas.h"
+#include "utils.h"
 
 #include <math.h>
 #include <assert.h>
@@ -6,8 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "utils.h"
 void reorg_cpu(float *x, int out_w, int out_h, int out_c, int batch, int stride, int forward, float *out)
 {
     int b,i,j,k;

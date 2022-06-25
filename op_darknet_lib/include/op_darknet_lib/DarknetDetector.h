@@ -59,15 +59,14 @@ static PlannerHNS::EnumString<TL_CLASS_TYPE> TL_CLASS_TYPE_STR(TL_UNKNOWN,
 		});
 
 enum MAP_CLASS_TYPE{
-	MAP_UNKNOWN = 0,
-	PERSON_CLASS = 1,
-	BICYCLE_CLASS = 2,
-	CAR_CLASS = 3,
-	MOTORBIKE_CLASS = 4,
-	BUS_CLASS = 6,
-	TRUCK_CLASS = 8,
-	TRAFFIC_LIGHT = 10,
-	STOP_SIGN = 12,
+	PERSON_CLASS = 0,
+	BICYCLE_CLASS = 1,
+	CAR_CLASS = 2,
+	MOTORBIKE_CLASS = 3,
+	BUS_CLASS = 5,
+	TRUCK_CLASS = 7,
+	TRAFFIC_LIGHT = 9,
+	STOP_SIGN = 11,
 	STOP_LINE = 101,
 	CROSSING = 102,
 	FORWARD_ARROW = 103,
@@ -79,31 +78,32 @@ enum MAP_CLASS_TYPE{
 	LEFT_RIGHT_FORWARD_ARROW = 109,
 	NO_UTURN = 110,
 	INTERSECTION_BOX = 111,
+	MAP_UNKNOWN = 150,
 	};
 
 static PlannerHNS::EnumString<MAP_CLASS_TYPE> MAP_CLASS_TYPE_STR(MAP_UNKNOWN,
-		{
-				{PERSON_CLASS, "Person"},
-				{BICYCLE_CLASS, "Bicycle"},
-				{CAR_CLASS, "Car"},
-				{MOTORBIKE_CLASS, "Motorbike"},
-				{BUS_CLASS, "Bus"},
-				{TRUCK_CLASS, "Truck"},
-				{TRAFFIC_LIGHT, "Traffic Light"},
-				{STOP_SIGN, "Stop Sign"},
-				{STOP_LINE, "Stop Line"},
-				{CROSSING, "Crossing"},
-				{FORWARD_ARROW, "Arrow Forward"},
-				{RIGHT_ONLY_ARROW, "Arrow Only Right"},
-				{LEFT_ONLY_ARROW, "Arrow Only Left"},
-				{RIGHT_FORWARD_ARROW, "Arrow Right"},
-				{LEFT_FORWARD_ARROW, "Arrow Left"},
-				{LEFT_RIGHT_ARROW, "Arrow Left Right"},
-				{LEFT_RIGHT_FORWARD_ARROW, "Arrow All"},
-				{NO_UTURN, "No U Turn"},
-				{INTERSECTION_BOX, "Intersection"},
-				{MAP_UNKNOWN, "Unknown"},
-		});
+{
+	{PERSON_CLASS, "person"},
+	{BICYCLE_CLASS, "bicycle"},
+	{CAR_CLASS, "car"},
+	{MOTORBIKE_CLASS, "motorbike"},
+	{BUS_CLASS, "bus"},
+	{TRUCK_CLASS, "truck"},
+	{TRAFFIC_LIGHT, "traffic light"},
+	{STOP_SIGN, "stop sign"},
+	{STOP_LINE, "stop line"},
+	{CROSSING, "crossing"},
+	{FORWARD_ARROW, "arrow forward"},
+	{RIGHT_ONLY_ARROW, "arrow only right"},
+	{LEFT_ONLY_ARROW, "arrow only left"},
+	{RIGHT_FORWARD_ARROW, "arrow right"},
+	{LEFT_FORWARD_ARROW, "arrow left"},
+	{LEFT_RIGHT_ARROW, "arrow left right"},
+	{LEFT_RIGHT_FORWARD_ARROW, "arrow all"},
+	{NO_UTURN, "no u turn"},
+	{INTERSECTION_BOX, "intersection"},
+	{MAP_UNKNOWN, "unknown"},
+});
 
 template <class T>
 class DetectedObjClass
@@ -112,6 +112,7 @@ public:
 	double score;
 	cv::Point top_right;
 	cv::Point bottom_left;
+	std::vector<PlannerHNS::WayPoint> poly_contour;
 	double width;
 	double height;
 	double center_x;
@@ -136,13 +137,9 @@ class DarknetParams
 public:
 	std::string config_file;
 	std::string weights_file;
-
-	double detect_threshold;
-
-	DarknetParams()
-	{
-		detect_threshold = 0.5;
-	}
+	std::string names_file;
+	std::vector<std::string> classes_names;
+	double detect_threshold = 0.001;
 };
 
 template <class T>
@@ -152,12 +149,20 @@ class DarknetDetector
 public:
 	DarknetParams m_params;
 	network m_net;
+	int m_gCounter = 0;
+	timespec m_Timer;
 
 	DarknetDetector()
 	{
 		UtilityHNS::UtilityH::GetTickCount(m_Timer);
 	}
-	virtual ~DarknetDetector() {}
+	virtual ~DarknetDetector()
+	{
+//		if(m_classes_names != nullptr)
+//		{
+//			free_ptrs((void**)m_classes_names, m_params.classes_names.size());
+//		}
+	}
 
 	int Init( DarknetParams& _params)
 	{
@@ -168,6 +173,14 @@ public:
 
 		char* w_name =  new char[m_params.weights_file.size()];
 		strcpy(w_name, m_params.weights_file.c_str());
+
+//		m_classes_names = new char*[m_params.classes_names.size()];
+//		for(unsigned int i=0; i < _params.classes_names.size(); i++)
+//		{
+//			std::string str_name = _params.classes_names.at(i);
+//			m_classes_names[i] = new char[str_name.size()];
+//			strcpy(m_classes_names[i], str_name.c_str());
+//		}
 
 		m_net = parse_network_cfg_custom(c_name, 1, 1);
 		load_weights(&m_net, w_name);
@@ -180,33 +193,44 @@ public:
 		return 0;
 	}
 
-	std::vector<DetectedObjClass<T> > DetectObjects(IplImage& src_img);
+	std::vector<DetectedObjClass<T> > DetectObjects(cv::Mat& src_img);
 
 
-	image ipl_to_image(IplImage* src)
+	image mat_to_image(cv::Mat src_mat)
 	{
-		 image out = make_image(src->width, src->height, m_net.c);
-
-		unsigned char *data = (unsigned char *)src->imageData;
-		int h = src->height;
-		int w = src->width;
-		int c = src->nChannels;
-		int step = src->widthStep;
-		int i, j, k;
-
-		for(i = 0; i < h; ++i){
-			for(k= 0; k < c; ++k){
-				for(j = 0; j < w; ++j){
-					out.data[k*w*h + i*w + j] = data[i*step + j*c + k]/255.;
-				}
-			}
+		cv::Mat dst;
+		if (src_mat.channels() == 3)
+		{
+			cv::cvtColor(src_mat, dst, cv::COLOR_RGB2BGR);
+		}
+		else if (src_mat.channels() == 4)
+		{
+			cv::cvtColor(src_mat, dst, cv::COLOR_RGBA2BGRA);
+		}
+		else
+		{
+			dst = src_mat;
 		}
 
-		return out;
+	    int w = dst.cols;
+	    int h = dst.rows;
+	    int c = dst.channels();
+	    image im = make_image(w, h, c);
+	    unsigned char *data = (unsigned char *)dst.data;
+	    int step = dst.step;
+	    for (int y = 0; y < h; ++y) {
+	        for (int k = 0; k < c; ++k) {
+	            for (int x = 0; x < w; ++x) {
+	                //uint8_t val = mat.ptr<uint8_t>(y)[c * x + k];
+	                //uint8_t val = mat.at<Vec3b>(y, x).val[k];
+	                //im.data[k*w*h + y*w + x] = val / 255.0f;
+
+	                im.data[k*w*h + y*w + x] = data[y*step + x*c + k] / 255.0f;
+	            }
+	        }
+	    }
+	    return im;
 	}
-	int m_gCounter = 0;
-	timespec m_Timer;
-	const int m_nClasses = 8;
 };
 
 }

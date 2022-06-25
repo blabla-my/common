@@ -1,12 +1,11 @@
 #include "local_layer.h"
-
+#include "utils.h"
+#include "im2col.h"
+#include "col2im.h"
+#include "blas.h"
+#include "gemm.h"
 #include <stdio.h>
 #include <time.h>
-#include "blas.h"
-#include "col2im.h"
-#include "gemm.h"
-#include "im2col.h"
-#include "utils.h"
 
 int local_out_height(local_layer l)
 {

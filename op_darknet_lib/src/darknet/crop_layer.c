@@ -1,8 +1,7 @@
-#include "crop_layer.h"
-
-#include <stdio.h>
-#include "dark_cuda.h"
 #include "utils.h"
+#include "crop_layer.h"
+#include "dark_cuda.h"
+#include <stdio.h>
 
 image get_crop_image(crop_layer l)
 {
