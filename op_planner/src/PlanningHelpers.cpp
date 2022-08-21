@@ -1493,6 +1493,34 @@ void PlanningHelpers::CreateManualBranch(std::vector<WayPoint>& path, const int&
 
 }
 
+// Just add new point if distance between any two points is bigger than the res distance
+void PlanningHelpers::FixPathResolution(std::vector<WayPoint>& path, const double& res)
+{
+	bool bChange = true;
+	while (bChange && path.size()>1)
+	{
+		bChange = false;
+		PlannerHNS::WayPoint p1 =  path.at(path.size()-1);
+		for(unsigned int i=0; i< path.size(); i++)
+		{
+			PlannerHNS::WayPoint p2 = path.at(i);
+			double d = hypot(p2.pos.y- p1.pos.y, p2.pos.x - p1.pos.x);
+			if(d > res)
+			{
+				PlannerHNS::WayPoint center_p = p1;
+				center_p.pos.x = (p2.pos.x + p1.pos.x)/2.0;
+				center_p.pos.y = (p2.pos.y + p1.pos.y)/2.0;
+				path.insert(path.begin()+i, center_p);
+				bChange = true;
+				break;
+			}
+
+			p1 = p2;
+		}
+	}
+}
+
+//Change points position along the path so the distance between all points are the same and equal to density distance
 void PlanningHelpers::FixPathDensity(vector<WayPoint>& path, const double& distanceDensity)
 {
 	if(path.size() == 0 || distanceDensity==0) return;
@@ -4193,5 +4221,23 @@ double PlanningHelpers::fpprunge ( double x )
   return fx;
 }
 
+PlannerHNS::WayPoint PlanningHelpers::CalcCenterPoint(const std::vector<PlannerHNS::WayPoint>& points)
+{
+	PlannerHNS::WayPoint min(DBL_MAX, DBL_MAX, DBL_MAX, 0);
+	PlannerHNS::WayPoint max(DBL_MIN, DBL_MIN, DBL_MIN, 0);
+
+	for(auto& p : points)
+	{
+		if(p.pos.x > max.pos.x) max.pos.x = p.pos.x;
+		if(p.pos.y > max.pos.y) max.pos.y = p.pos.y;
+		if(p.pos.z > max.pos.z) max.pos.z = p.pos.z;
+
+		if(p.pos.x < min.pos.x) min.pos.x = p.pos.x;
+		if(p.pos.y < min.pos.y) min.pos.y = p.pos.y;
+		if(p.pos.z < min.pos.z) min.pos.z = p.pos.z;
+	}
+
+	return PlannerHNS::WayPoint((max.pos.x+min.pos.x)/2.0, (max.pos.y+min.pos.y)/2.0, (max.pos.z+min.pos.z)/2.0, 0);
+}
 
 } /* namespace PlannerHNS */

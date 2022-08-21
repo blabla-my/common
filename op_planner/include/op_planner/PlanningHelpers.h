@@ -82,7 +82,11 @@ public:
 
 	static void CreateManualBranchFromTwoPoints(WayPoint& p1,WayPoint& p2 , const double& distance, const DIRECTION_TYPE& direction, std::vector<WayPoint>& path);
 
+	//Change points position along the path so the distance between all points are the same and equal to density distance
 	static void FixPathDensity(std::vector<WayPoint>& path, const double& distanceDensity);
+
+	// Just add new point if distance between any two points is bigger than the res distance
+	static void FixPathResolution(std::vector<WayPoint>& path, const double& res);
 
 	static void FixPathDensity(std::vector<GPSPoint>& path, const double& distanceDensity);
 
@@ -248,6 +252,8 @@ public:
 	static bool CheckRightLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::WayPoint* pWP2);
 	static bool CheckLeftLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::WayPoint* pWP2);
 	static void FilterWaypoints(std::vector<PlannerHNS::WayPoint*>& wp_list, PlannerHNS::WayPoint* pPrevWP);
+
+	static PlannerHNS::WayPoint CalcCenterPoint(const std::vector<PlannerHNS::WayPoint>& points);
 
 	static double frunge ( double x );
 
