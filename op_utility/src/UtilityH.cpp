@@ -240,6 +240,31 @@ time_t UtilityH::GetLongTime(const struct timespec& srcT)
 	return dstT;
 }
 
+std::string UtilityH::GetFileNameFromPathName(const std::string& path_with_name)
+{
+	int index_last = path_with_name.find_last_of("/");
+	std::string file_name_only;
+
+	if(index_last > 0 && (index_last+1) < path_with_name.size())
+	{
+		return path_with_name.substr(index_last, path_with_name.size());
+	}
+
+	return path_with_name;
+}
+
+std::string UtilityH::GetFileNameWithoutExtention(const std::string& file_name)
+{
+	int index_last = file_name.find_last_of(".");
+	if(index_last > 0)
+	{
+		return file_name.substr(0, index_last);
+	}
+
+	return file_name;
+}
+
+
 void UtilityH::GetFileNameInAllSubfolders(const std::string& in_path, const std::vector<std::string>& extentions, std::vector<std::string>& out_list, int dir_level)
 {
 	std::string path = in_path;

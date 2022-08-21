@@ -270,6 +270,12 @@ SimpleReaderBase::SimpleReaderBase(const string& path, const int& nHeaders, cons
 		return;
 	}
 
+	if(m_File.eof())
+	{
+		printf("\nReach End of file!, %s \n", file_name_.c_str());
+		return;
+	}
+
 	m_nHeders = nHeaders;
 	m_iDataTitles = iDataTitles;
 	m_nVarPerObj = nVariablesForOneObject;
