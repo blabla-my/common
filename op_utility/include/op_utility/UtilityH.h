@@ -51,7 +51,13 @@ public:
 	static double GetMomentumScaleFactor(const double& v);
 	static timespec GetTimeSpec(const time_t& srcT);
 	static time_t GetLongTime(const struct timespec& srcT);
-	static void GetFileNameInFolder(const std::string& path, const std::string& extention, std::vector<std::string>& out_list);
+	static void GetFileNameInFolder(const std::string& path, const std::vector<std::string>& extentions, std::vector<std::string>& out_list, bool bFullPath = true);
+
+	//This function will go only 3 levels
+	static void GetFileNameInAllSubfolders(const std::string& path, const std::vector<std::string>& extentions, std::vector<std::string>& out_list, int dir_level = 0);
+	static void GetImageNamesInAllSubfoldersCam1Cam2(const std::string& path, const std::vector<std::string>& extentions, std::vector<std::string>& out_list, int dir_level = 0);
+	static std::string GetFileNameFromPathName(const std::string& path_with_name);
+	static std::string GetFileNameWithoutExtention(const std::string& file_name);
 };
 
 class PIDController

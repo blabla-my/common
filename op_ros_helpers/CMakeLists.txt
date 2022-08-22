@@ -49,8 +49,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-set(ROS_HELPERS_SRC
-  src/PolygonGenerator.cpp
+set(ROS_HELPERS_SRC  
   src/op_ROSHelpers.cpp
   src/ROSMapHandler.cpp
   src/ROSVelocityHandler.cpp

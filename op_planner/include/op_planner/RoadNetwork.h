@@ -1725,6 +1725,11 @@ public:
 	EnumString(const T& _default, const std::vector<std::pair<T, std::string> >& list) :
 		_default(_default), _enum_str_list(list){}
 
+	std::vector<std::pair<T, std::string> > GetEnumList()
+	{
+		return _enum_str_list;
+	}
+
 	int GetIndex(const T& _enum)
 	{
 		for(unsigned int i = 0; i < _enum_str_list.size(); i++)
