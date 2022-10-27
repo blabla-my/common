@@ -270,12 +270,6 @@ SimpleReaderBase::SimpleReaderBase(const string& path, const int& nHeaders, cons
 		return;
 	}
 
-	if(m_File.eof())
-	{
-		printf("\nReach End of file!, %s \n", file_name_.c_str());
-		return;
-	}
-
 	m_nHeders = nHeaders;
 	m_iDataTitles = iDataTitles;
 	m_nVarPerObj = nVariablesForOneObject;
@@ -295,7 +289,11 @@ SimpleReaderBase::~SimpleReaderBase()
 
 bool SimpleReaderBase::ReadSingleLine(vector<vector<string> >& line)
 {
-	if(!m_File.is_open() || m_File.eof()) return false;
+	if(!m_File.is_open() || m_File.eof())
+	{
+		std::cout << "SimpleReaderBase: IsOpen: " << m_File.is_open() << ", IsEOF: " << m_File.eof() << std::endl;
+		return false;
+	}
 
 	string strLine, innerToken;
 	line.clear();
@@ -619,6 +617,90 @@ int DatasetTrajectoryReader::ReadAllData(vector<TimePoint>& data_list)
 	return count;
 }
 
+//B Dataset Trajectory Reader
+
+bool DatasetTrajectoryReaderB::ReadNextLine(TimePoint& data)
+{
+	vector<vector<string> > lineData;
+	if(ReadSingleLine(lineData))
+	{
+		if(lineData.size()==0) return false;
+		if(lineData.at(0).size() > 0)
+		{
+			data.t = strtod(lineData.at(0).at(0).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 1)
+		{
+			data.lat = strtod(lineData.at(0).at(1).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 2)
+		{
+			data.lon = strtod(lineData.at(0).at(2).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 3)
+		{
+			data.alt = strtod(lineData.at(0).at(3).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 10)
+		{
+			data.yaw = strtod(lineData.at(0).at(10).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 11)
+		{
+			data.pitch = strtod(lineData.at(0).at(11).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 12)
+		{
+			data.roll = strtod(lineData.at(0).at(12).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 13)
+		{
+			data.x = strtod(lineData.at(0).at(13).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 14)
+		{
+			data.y = strtod(lineData.at(0).at(14).c_str(), NULL);
+		}
+
+		if(lineData.at(0).size() > 15)
+		{
+			data.z = strtod(lineData.at(0).at(15).c_str(), NULL);
+		}
+
+		return true;
+
+	}
+	else
+		return false;
+}
+
+int DatasetTrajectoryReaderB::ReadAllData()
+{
+	return 0;
+}
+
+int DatasetTrajectoryReaderB::ReadAllData(vector<TimePoint>& data_list)
+{
+	if(!m_File.is_open()) return 0;
+	data_list.clear();
+	TimePoint data;
+	//double logTime = 0;
+	int count = 0;
+	while(ReadNextLine(data))
+	{
+		data_list.push_back(data);
+		count++;
+	}
+	return count;
+}
 
 // Destinations data
 

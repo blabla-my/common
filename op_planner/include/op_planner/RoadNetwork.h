@@ -126,9 +126,11 @@ enum LaneType{
 
 enum CustomBehaviorType{CUSTOM_AVOIDANCE_DISABLED = 0, CUSTOM_AVOIDANCE_ENABLED = 1};
 
-enum MARKING_COLOR{MARK_COLOR_WHITE, MARK_COLOR_YELLOW, MARK_COLOR_RED, MARK_COLOR_ORANG, MARK_COLOR_BLUE};
+enum MARKING_COLOR{MARK_WHITE, MARK_YELLOW, MARK_RED, MARK_ORANG, MARK_BLUE, MARK_GREEN};
 
-enum LINE_TYPE{DEFAULT_WHITE_LINE, DEFAULT_YELLOW_LINE, CONTINUOUS_LINE, SEPARATION_LINE, SUPPORT_LINE, GENERAL_LINE};
+enum LINE_TYPE{DOTTED_LINE, SOLID_LINE, DOUBLE_DOTTED_LINE, DOUBLE_SOLID_LINE, SHOULDER_LINE, LINE_STOP_LINE,
+	LINE_RUMBLE_STRIP, LINE_GIVE_WAY, LINE_NOT_DEFINED, LINE_HATCH, LINE_PARKING_ENVELOPE, LINE_EDGE, LINE_BUS_LANE, LINE_NO_PASSING
+};
 
 enum TRAFFIC_SIGN_TYPE {UNKNOWN_SIGN, STOP_SIGN, MAX_SPEED_SIGN, MIN_SPEED_SIGN, NO_PARKING_SIGN, SCHOOL_CROSSING_SIGN};
 
@@ -813,7 +815,7 @@ public:
 		laneId = 0;
 		roadId = 0;
 		mark_type = UNKNOWN_MARK;
-		mark_color = MARK_COLOR_WHITE;
+		mark_color = MARK_WHITE;
 		pLane = nullptr;
 		width = 0;
 		pRoad = nullptr;
@@ -952,8 +954,8 @@ public:
 		id = 0;
 		width = 0;
 		roadID = 0;
-		color = MARK_COLOR_WHITE;
-		type = GENERAL_LINE;
+		color = MARK_WHITE;
+		type = DOTTED_LINE;
 		original_type = 0;
 		pRoad = nullptr;
 	}
@@ -1042,6 +1044,14 @@ public:
 		bLeftHand = false;
 	}
 
+	bool Empty()
+	{
+		return roadSegments.size() == 0 && lines.size() == 0 && curbs.size() == 0 && signs.size() == 0
+				&& trafficLights.size() == 0 && stopLines.size() == 0 && boundaries.size() == 0
+				&& crossings.size() == 0 && markings.size() == 0 && signs.size() == 0
+				&& junctions.size() == 0;
+	}
+
 	void Clear()
 	{
 		roadSegments.clear();
@@ -1079,6 +1089,25 @@ public:
 	static int g_max_crossing_id;
 	static int g_max_road_id;
 	static int g_max_junction_id;
+
+	Lane* GetLaneByWaypointId(const int& wp_id,RoadNetwork& map)
+	{
+		for(auto& seg: map.roadSegments)
+		{
+			for(auto& l: seg.Lanes)
+			{
+				for(auto& p: l.points)
+				{
+					if(p.id == wp_id)
+					{
+						return &l;
+					}
+				}
+			}
+		}
+
+		return nullptr;
+	}
 
 	Lane* GetLaneById(int laneId)
 	{
@@ -1828,6 +1857,35 @@ static EnumString<LaneType> LaneTypesStr(NORMAL_LANE,
 		{ONRAMP_LANE, "onramp"},
 		{PLANE_LANE, "plane"},
 		{EMERGENCY_LANE, "emergency"}
+});
+
+
+static EnumString<LINE_TYPE> LineTypesStr(DOTTED_LINE,
+{
+		{DOTTED_LINE, "Broken"},
+		{SOLID_LINE, "Solid"},
+		{DOUBLE_DOTTED_LINE, "Double Broken"},
+		{DOUBLE_SOLID_LINE, "Double Solid"},
+		{SHOULDER_LINE, "Shoulder"},
+		{LINE_STOP_LINE, "Stop Line"},
+		{LINE_RUMBLE_STRIP, "Rumble Strips"},
+		{LINE_GIVE_WAY, "Giveway Line"},
+		{LINE_HATCH, "Hatch Line"},
+		{LINE_PARKING_ENVELOPE, "Parking Envelope Line"},
+		{LINE_EDGE, "Edge Line"},
+		{LINE_BUS_LANE, "Bus Lane"},
+		{LINE_NO_PASSING, "No Passing Line"},
+		{LINE_NOT_DEFINED, "N//A"}
+});
+
+static EnumString<MARKING_COLOR> MarkColorsStr(MARK_WHITE,
+{
+		{MARK_WHITE, "white"},
+		{MARK_YELLOW, "yellow"},
+		{MARK_RED, "red"},
+		{MARK_ORANG, "orange"},
+		{MARK_BLUE, "blue"},
+		{MARK_GREEN, "green"},
 });
 
 }

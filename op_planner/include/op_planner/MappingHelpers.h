@@ -90,7 +90,7 @@ public:
 
 	static void GetUniqueNextLanes(const Lane* l,  const std::vector<Lane*>& traversed_lanes, std::vector<Lane*>& lanes_list);
 
-	static GPSPoint GetTransformationOrigin(const int& bToyotaCityMap = 0);
+//	static GPSPoint GetTransformationOrigin(const int& bToyotaCityMap = 0);
 
 	static void RemoveShortTwoPointsLanesFromMap(RoadNetwork& map, double l_length);
 
@@ -137,6 +137,7 @@ public:
 
 	static void InsertWayPointToBackOfLane(const WayPoint& wp, Lane& lane, int& global_id);
 	static void InsertWayPointToFrontOfLane(const WayPoint& wp, Lane& lane, int& global_id);
+	static void InsertPointToEndOfPathWithAngleThreshold(const WayPoint& p, std::vector<WayPoint>& path, double max_angle = M_PI_2);
 
 	static void LinkLanesPointers(PlannerHNS::RoadNetwork& map);
 	static void LinkLaneChangeWaypointsPointers(PlannerHNS::RoadNetwork& map);
@@ -160,18 +161,18 @@ public:
 	static void correct_gps_coor(double& lat,double& lon);
 	static void correct_nmea_coor(double& lat,double& lon);
 
-	static std::string FromMarkColorToText(MARKING_COLOR mark_color);
-	static std::string FromLineTypeToText(LINE_TYPE type);
+//	static std::string FromMarkColorToText(MARKING_COLOR mark_color);
+//	static std::string FromLineTypeToText(LINE_TYPE type);
 	static std::string FromLightTypeToText(TRAFFIC_LIGHT_TYPE type);
 	static std::string FromSignTypeToText(TRAFFIC_SIGN_TYPE type);
 
-	static LINE_TYPE FromTextToLineType(std::string type);
-	static MARKING_COLOR FromTextToMarkColor(std::string mark_color);
+//	static LINE_TYPE FromTextToLineType(std::string type);
+//	static MARKING_COLOR FromTextToMarkColor(std::string mark_color);
 	static TRAFFIC_LIGHT_TYPE FromTextToLightType(std::string light_type);
 	static TRAFFIC_SIGN_TYPE FromTextToSignType(std::string sign_type);
 
-	static LINE_TYPE FromNumberToLineType(int type);
-	static MARKING_COLOR FromNumberToMarkColor(int color);
+//	static LINE_TYPE FromNumberToLineType(int type);
+//	static MARKING_COLOR FromNumberToMarkColor(int color);
 	static TRAFFIC_LIGHT_TYPE FromNumberToLightType(int type);
 	static TRAFFIC_SIGN_TYPE FromNumberToSignType(int type);
 
@@ -185,8 +186,6 @@ public:
 	 * This function is added to handle CARLA map issue
 	 */
 	static void ShiftStopLinesToMatchTrafficLights(RoadNetwork& map);
-
-	static void InsertPointToEndOfPathWithAngleThreshold(const WayPoint& p, std::vector<WayPoint>& path, double max_angle = M_PI_2);
 
 	/**
 	 * @brief Reading supporting file which contains projection string and map origin. it should have the same name as the fileName + ".proj.dat"

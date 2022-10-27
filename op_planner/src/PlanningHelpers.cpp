@@ -48,7 +48,6 @@ int PlanningHelpers::CheckForEndOfPaths(const std::vector<std::vector<PlannerHNS
 	return -1;
 }
 
-
 bool PlanningHelpers::GetRelativeInfoRange(const std::vector<std::vector<WayPoint> >& trajectories, const WayPoint& p,const double& searchDistance, RelativeInfo& info)
 {
 	if(trajectories.size() == 0) return false;
@@ -1256,6 +1255,9 @@ double PlanningHelpers::GetDistanceOnTrajectory_obsolete(const std::vector<WayPo
 	return d_on_path;
 }
 
+/**
+ * Compare exact trajectory match, floating point compare will be better with very small error margin (epsilon)
+ */
 bool PlanningHelpers::CompareTrajectories(const std::vector<WayPoint>& path1, const std::vector<WayPoint>& path2)
 {
 	if(path1.size() != path2.size())
@@ -1270,6 +1272,9 @@ bool PlanningHelpers::CompareTrajectories(const std::vector<WayPoint>& path1, co
 	return true;
 }
 
+/**
+ * The path must contain pointer to the lane, and relation between the lane and the stop line already exist in the map
+ */
 double PlanningHelpers::GetDistanceToClosestStopLineAndCheck(const std::vector<WayPoint>& path, const WayPoint& p, const double& giveUpDistance, int& stopLineID, int& stopSignID, int& trafficLightID, const int& prevIndex)
 {
 	trafficLightID = stopSignID = stopLineID = -1;
@@ -1310,6 +1315,10 @@ double PlanningHelpers::GetDistanceToClosestStopLineAndCheck(const std::vector<W
 	return -1;
 }
 
+/**
+ * Similar to previous function (V1) without the need to have lane pointer in the path
+ * Relation between the lane and the stop line already exist in the map
+ */
 double PlanningHelpers::GetDistanceToClosestStopLineAndCheckV2(const std::vector<WayPoint>& path, const WayPoint& p, const std::vector<StopLine>& slines, int& stopLineID, int& stopSignID, std::vector<int>& trafficLightIDs)
 {
 	stopSignID = stopLineID = -1;
@@ -1493,15 +1502,20 @@ void PlanningHelpers::CreateManualBranch(std::vector<WayPoint>& path, const int&
 
 }
 
-// Just add new point if distance between any two points is bigger than the res distance
+/**
+ * Just add new point if distance between any two points is bigger than the res distance
+ * Doesn't reduce resolution , only increase it.
+ */
 void PlanningHelpers::FixPathResolution(std::vector<WayPoint>& path, const double& res)
 {
 	bool bChange = true;
 	while (bChange && path.size()>1)
 	{
 		bChange = false;
-		PlannerHNS::WayPoint p1 =  path.at(path.size()-1);
-		for(unsigned int i=0; i< path.size(); i++)
+		vector<WayPoint> fixedPath;
+		PlannerHNS::WayPoint p1 =  path.at(0);
+		fixedPath.push_back(p1);
+		for(unsigned int i=1; i< path.size(); i++)
 		{
 			PlannerHNS::WayPoint p2 = path.at(i);
 			double d = hypot(p2.pos.y- p1.pos.y, p2.pos.x - p1.pos.x);
@@ -1510,17 +1524,21 @@ void PlanningHelpers::FixPathResolution(std::vector<WayPoint>& path, const doubl
 				PlannerHNS::WayPoint center_p = p1;
 				center_p.pos.x = (p2.pos.x + p1.pos.x)/2.0;
 				center_p.pos.y = (p2.pos.y + p1.pos.y)/2.0;
-				path.insert(path.begin()+i, center_p);
+				fixedPath.push_back(center_p);
 				bChange = true;
-				break;
 			}
-
+			fixedPath.push_back(p2);
 			p1 = p2;
 		}
+
+		path = fixedPath;
 	}
 }
 
-//Change points position along the path so the distance between all points are the same and equal to density distance
+/**
+ * Change points position along the path so the distance between all points are the same and equal to density distance
+ * It removes point from corners, could result in path shape unexpected changes
+ */
 void PlanningHelpers::FixPathDensity(vector<WayPoint>& path, const double& distanceDensity)
 {
 	if(path.size() == 0 || distanceDensity==0) return;
@@ -1609,6 +1627,9 @@ void PlanningHelpers::FixPathDensity(vector<WayPoint>& path, const double& dista
 	path = fixedPath;
 }
 
+/**
+ * Same as FixPathDensity, it just used GPSPoint directly
+ */
 void PlanningHelpers::FixPathDensity(vector<GPSPoint>& path, const double& distanceDensity)
 {
 	if(path.size() == 0 || distanceDensity==0) return;
@@ -1660,6 +1681,9 @@ void PlanningHelpers::FixPathDensity(vector<GPSPoint>& path, const double& dista
 	path = fixedPath;
 }
 
+/**
+ * Uses conjugate gradient (CG)
+ */
 void PlanningHelpers::SmoothPath(vector<WayPoint>& path, double weight_data,
 		double weight_smooth, double tolerance)
 {
@@ -1791,7 +1815,7 @@ void PlanningHelpers::FixAngleOnly(std::vector<WayPoint>& path)
 	path[0].pos.a = UtilityHNS::UtilityH::FixNegativeAngle(atan2(path[1].pos.y - path[0].pos.y, path[1].pos.x - path[0].pos.x ));
 
 	for(int j = 1; j < path.size()-1; j++)
-		path[j].pos.a 		= UtilityHNS::UtilityH::FixNegativeAngle(atan2(path[j+1].pos.y - path[j].pos.y, path[j+1].pos.x - path[j].pos.x ));
+		path[j].pos.a = UtilityHNS::UtilityH::FixNegativeAngle(atan2(path[j+1].pos.y - path[j].pos.y, path[j+1].pos.x - path[j].pos.x ));
 
 	int j = (int)path.size()-1;
 
@@ -1804,6 +1828,10 @@ void PlanningHelpers::FixAngleOnly(std::vector<WayPoint>& path)
 	}
 }
 
+/**
+ * Beside calculating angle between each two waypoints , the distance cost is stored in distanceCose.
+ * The distance is calculated incrementally where last point contains the lenth of the path
+ */
 double PlanningHelpers::CalcAngleAndCost(vector<WayPoint>& path, const double& lastCost, const bool& bSmooth)
 {
 	if(path.size() < 2) return 0;
@@ -1839,6 +1867,9 @@ double PlanningHelpers::CalcAngleAndCost(vector<WayPoint>& path, const double& l
 	return path[j].distanceCost;
 }
 
+/**
+ * Calculated the curvature cost for each waypoint along the path
+ */
 void PlanningHelpers::CalcAngleAndCurvatureCost(vector<WayPoint>& path)
 {
 	if(path.size() < 2) return;
@@ -1869,6 +1900,50 @@ void PlanningHelpers::CalcAngleAndCurvatureCost(vector<WayPoint>& path)
 	path[j].curvatureCost 	= path[j-1].curvatureCost ;
 }
 
+/**
+ * Smooth limit is normalized 100%. 1 means super smooth point (angle between waypoints doesn't change).
+ * 0 means angle change almost 180 degrees
+ * @return number of bad points (with curvature percentage less than the smooth_limit)
+ */
+int PlanningHelpers::IsSmoothCurve(const std::vector<WayPoint>& curve, double smooth_limit)
+{
+	if(curve.size() < 3) return 0;
+
+	std::vector<WayPoint> points = curve;
+	PlanningHelpers::CalcAngleAndCurvatureCost(points);
+	int nPoints = 0;
+	for(auto& p: points)
+	{
+		if(p.curvatureCost < smooth_limit)
+		{
+			nPoints++;
+		}
+	}
+
+	return nPoints;
+}
+
+/**
+* Smooth until smoothing threshold reached
+* Smooth limit, is a percentag from 0-100 (0-1.0) indicate how smooth the path is.
+* nIterations is the maximum number of applying smooth to the path before giving up
+* the function will return the actual number of iterations used
+*/
+int PlanningHelpers::SmoothCurve(std::vector<WayPoint>& path, double smooth_limit, double nMaxIterations)
+{
+	int iterations = 0;
+	while(IsSmoothCurve(path, smooth_limit) > 0 && iterations < nMaxIterations)
+	{
+		SmoothPath(path, 0.48, 0.1, 0.05);
+		iterations++;
+	}
+
+	return iterations;
+}
+
+/**
+ * Calculated the radius of the circle formed by three points (pt1, pt2, pt3)
+ */
 double PlanningHelpers::CalcCircle(const GPSPoint& pt1, const GPSPoint& pt2, const GPSPoint& pt3, GPSPoint& center)
 {
 	double yDelta_a= pt2.y - pt1.y;
@@ -1949,6 +2024,9 @@ double PlanningHelpers::CalcCircleV2(const WayPoint& p1, const WayPoint& p2, con
 
 }
 
+/**
+ * Calculates angle, distance , and slope for each waypoint along the path
+ */
 void PlanningHelpers::CalcDtLaneInfo(vector<WayPoint>& path)
 {
 	if(path.size() < 2) return;
@@ -2004,6 +2082,10 @@ void PlanningHelpers::CalcDtLaneInfo(vector<WayPoint>& path)
 	}
 }
 
+/**
+ * Extract a section of the path starting from the perpendicular point to the input point (pos) to the minDistance
+ * pos must include heading
+ */
 int PlanningHelpers::ExtractPartFromPointToDistanceDirectionFast(const vector<WayPoint>& originalPath, const WayPoint& pos, const double& minDistance,
 		const double& pathDensity, vector<WayPoint>& extractedPath, int prev_index)
 {
@@ -2049,8 +2131,11 @@ int PlanningHelpers::ExtractPartFromPointToDistanceDirectionFast(const vector<Wa
 	return close_index;
 }
 
+/**
+ * Extract a section of the path starting from the perpendicular point to the input point (pos) to the minDistance
+ */
 void PlanningHelpers::ExtractPartFromPointToDistanceFast(const vector<WayPoint>& originalPath, const WayPoint& pos, const double& minDistance,
-		const double& pathDensity, vector<WayPoint>& extractedPath, const double& SmoothDataWeight, const double& SmoothWeight, const double& SmoothTolerance)
+		const double& pathDensity, vector<WayPoint>& extractedPath)
 {
 	extractedPath.clear();
 	RelativeInfo info;
@@ -2087,6 +2172,26 @@ void PlanningHelpers::ExtractPartFromPointToDistanceFast(const vector<WayPoint>&
 
 	FixPathDensity(extractedPath, pathDensity);
 	CalcAngleAndCost(extractedPath);
+}
+
+double PlanningHelpers::GetDistanceFromPoseToEnd(const PlannerHNS::WayPoint& pose, const std::vector<WayPoint>& path)
+{
+	PlannerHNS::RelativeInfo info;
+	PlanningHelpers::GetRelativeInfoDirectionLimited(path, pose, info);
+
+	if(info.bAfter)
+		return -info.from_back_distance;
+
+	 double d = 0;
+	 for(unsigned int i = info.iFront; i < path.size()-1; i++)
+	 {
+		 d += hypot(path.at(i+1).pos.y - path.at(i).pos.y, path.at(i+1).pos.x - path.at(i).pos.x);
+	 }
+
+	 if(info.bBefore)
+		 d += info.to_front_distance;
+
+	 return d;
 }
 
 void PlanningHelpers::CalculateRollInTrajectories(const WayPoint& carPos, const double& speed, const vector<WayPoint>& originalCenter, int& start_index,
@@ -2437,6 +2542,9 @@ std::vector<int> PlanningHelpers::GetUniqueLeftRightIds(const std::vector<WayPoi
 	return sideLanes;
 }
 
+/**
+ * Use Conjugate Gradient with speed only
+ */
 void PlanningHelpers::SmoothSpeedProfiles(vector<WayPoint>& path_in, double weight_data, double weight_smooth, double tolerance	)
 {
 
@@ -2466,6 +2574,9 @@ void PlanningHelpers::SmoothSpeedProfiles(vector<WayPoint>& path_in, double weig
 	path_in = newpath;
 }
 
+/**
+ * Use Conjugate Gradient with curvature only
+ */
 void PlanningHelpers::SmoothCurvatureProfiles(vector<WayPoint>& path_in, double weight_data, double weight_smooth, double tolerance)
 {
 	if (path_in.size() <= 1)
@@ -2495,6 +2606,9 @@ void PlanningHelpers::SmoothCurvatureProfiles(vector<WayPoint>& path_in, double 
 	path_in = newpath;
 }
 
+/**
+ * Use Conjugate Gradient with orientation (.pos.a) only
+ */
 void PlanningHelpers::SmoothWayPointsDirections(vector<WayPoint>& path_in, double weight_data, double weight_smooth, double tolerance	)
 {
 
@@ -2524,6 +2638,9 @@ void PlanningHelpers::SmoothWayPointsDirections(vector<WayPoint>& path_in, doubl
 	path_in = newpath;
 }
 
+/**
+ * Use Conjugate Gradient with Z only
+ */
 void PlanningHelpers::SmoothZ(vector<WayPoint>& path_in, double weight_data, double weight_smooth, double tolerance	)
 {
 
@@ -2559,6 +2676,9 @@ void PlanningHelpers::SmoothGlobalPathSpeed(vector<WayPoint>& path)
 	SmoothSpeedProfiles(path, 0.45,0.25, 0.01);
 }
 
+/**
+ * Shift the speed profiles so the vehicle can break earlier
+ */
 void PlanningHelpers::ShiftRecommendedSpeed(std::vector<WayPoint>& path, const double& max_speed, const double& curr_speed, const double& inc_ratio, const double& path_density)
 {
 	if(max_speed == 0 || curr_speed == 0) return;
@@ -2617,6 +2737,9 @@ void PlanningHelpers::ShiftRecommendedSpeed(std::vector<WayPoint>& path, const d
 	SmoothSpeedProfiles(path, 0.4,0.3, 0.01);
 }
 
+/**
+ * Find the appropriate speed for each section of the path
+ */
 void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const double& max_speed, const double& speedProfileFactor)
 {
 	CalcAngleAndCurvatureCost(path);
@@ -2775,6 +2898,9 @@ double PlanningHelpers::GetACCVelocityModelBased(const double& dt, const double&
 	return desiredVel;
 }
 
+/**
+ * Used for the Global planning dynamic programming algorithm
+ */
 WayPoint* PlanningHelpers::BuildPlanningSearchTreeV2(WayPoint* pStart,
 		const WayPoint& goalPos,
 		const vector<int>& globalPath,
@@ -2918,6 +3044,9 @@ WayPoint* PlanningHelpers::BuildPlanningSearchTreeV2(WayPoint* pStart,
 	return pGoalCell;
 }
 
+/**
+ * Used for the Global planning dynamic programming algorithm
+ */
 WayPoint* PlanningHelpers::BuildPlanningSearchTreeStraight(WayPoint* pStart,
 		const double& DistanceLimit,
 		vector<WayPoint*>& all_cells_to_delete)
@@ -3211,71 +3340,6 @@ WayPoint* PlanningHelpers::CheckNodeExits(const vector<WayPoint*>& nodes, const 
 	return nullptr;
 }
 
-WayPoint* PlanningHelpers::CreateLaneHeadCell(Lane* pLane, WayPoint* pLeft, WayPoint* pRight,
-		WayPoint* pBack)
-{
-	if(!pLane) return nullptr;
-	if(pLane->points.size()==0) return nullptr;
-
-	WayPoint* c = new WayPoint;
-	c->pLane 		= pLane;
-	c->pos 			= pLane->points.at(0).pos;
-	c->v			= pLane->speed;
-	c->laneId  		= pLane->id;
-	c->pLeft 		= pLeft;
-	if(pLeft)
-		c->cost		= pLeft->cost;
-
-	c->pRight		= pRight;
-	if(pRight)
-		c->cost = pRight->cost;
-
-	if(pBack)
-	{
-		pBack->pFronts.push_back(c);
-		c->pBacks.push_back(pBack);
-		c->cost = pBack->cost + distance2points(c->pos, pBack->pos);
-
-		for(unsigned int i=0; i< c->pBacks.size(); i++)
-		{
-				if(c->pBacks.at(i)->cost < c->cost)
-					c->cost = c->pBacks.at(i)->cost;
-		}
-	}
-	return c;
-}
-
-double PlanningHelpers::GetLanePoints(Lane* l, const WayPoint& prevWayPointIndex,
-		const double& minDistance , const double& prevCost, vector<WayPoint>& points)
-{
-	if(l == NULL || minDistance<=0) return 0;
-
-	int index = 0;
-	WayPoint  p1, p2;
-	WayPoint idx;
-
-	p2 = p1 = l->points.at(index);
-	p1.pLane = l;
-	p1.distanceCost = prevCost;
-	p2.distanceCost = p1.distanceCost + distance2points(p1.pos, p2.pos);
-
-	points.push_back(p1);
-
-	for(unsigned int i=index+1; i<l->points.size(); i++)
-	{
-
-		p2 = l->points.at(i);
-		p2.pLane = l;
-		p2.distanceCost = p1.distanceCost + distance2points(p1.pos, p2.pos);
-		points.push_back(p2);
-
-		if(p2.distanceCost >= minDistance)
-				break;
-		p1 = p2;
-	}
-	return p2.distanceCost;
-}
-
 WayPoint* PlanningHelpers::GetMinCostCell(const vector<WayPoint*>& cells, const vector<int>& globalPathIds)
 {
 	if(cells.size() == 1)
@@ -3565,6 +3629,9 @@ ACTION_TYPE PlanningHelpers::GetBranchingDirection(WayPoint& currWP, WayPoint& n
 	return t;
 }
 
+/**
+ * Calculated contour points with local coordinates to the object using the objects width and height.
+ */
 void PlanningHelpers::CalcContourPointsForDetectedObjects(const WayPoint& currPose, vector<DetectedObject>& obj_list, const double& filterDistance)
 {
 	vector<DetectedObject> res_list;
@@ -3816,26 +3883,6 @@ void PlanningHelpers::GetCubeAndCenterofTwoPoints(const PlannerHNS::WayPoint& p1
 	max_p.pos.z += depth;
 }
 
-double PlanningHelpers::GetDistanceFromPoseToEnd(const PlannerHNS::WayPoint& pose, const std::vector<WayPoint>& path)
-{
-	PlannerHNS::RelativeInfo info;
-	PlanningHelpers::GetRelativeInfoDirectionLimited(path, pose, info);
-
-	if(info.bAfter)
-		return -info.from_back_distance;
-
-	 double d = 0;
-	 for(unsigned int i = info.iFront; i < path.size()-1; i++)
-	 {
-		 d += hypot(path.at(i+1).pos.y - path.at(i).pos.y, path.at(i+1).pos.x - path.at(i).pos.x);
-	 }
-
-	 if(info.bBefore)
-		 d += info.to_front_distance;
-
-	 return d;
-}
-
 double PlanningHelpers::CalculateLookAheadDistance(const double& steering_delay, const double& curr_velocity, const double& min_distance, double speed_factor, double delay_factor)
 {
 	// the bigger the steering delay the farther we want to look ahead, it will contribute by the following percentage
@@ -4024,6 +4071,9 @@ int PlanningHelpers::PointInsidePolygon(const std::vector<WayPoint>& points,cons
 	}
 }
 
+/**
+ * Used when CARLA waypoint is received as global plan
+ */
 bool PlanningHelpers::CheckFrontLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::WayPoint* pWP2, int search_level)
 {
 	std::vector<PlannerHNS::Lane*> pLanes;
@@ -4050,6 +4100,9 @@ bool PlanningHelpers::CheckFrontLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::Way
 	return false;
 }
 
+/**
+ * Used when CARLA waypoint is received as global plan
+ */
 bool PlanningHelpers::CheckBackLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::WayPoint* pWP2, int search_level)
 {
 	std::vector<PlannerHNS::Lane*> pLanes;
@@ -4072,6 +4125,9 @@ bool PlanningHelpers::CheckBackLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::WayP
 	return false;
 }
 
+/**
+ * Used when CARLA waypoint is received as global plan
+ */
 bool PlanningHelpers::CheckRightLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::WayPoint* pWP2)
 {
 	PlannerHNS::WayPoint* p2 = nullptr;
@@ -4104,6 +4160,9 @@ bool PlanningHelpers::CheckRightLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::Way
 	return false;
 }
 
+/**
+ * Used when CARLA waypoint is received as global plan
+ */
 bool PlanningHelpers::CheckLeftLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::WayPoint* pWP2)
 {
 	PlannerHNS::WayPoint* p2 = nullptr;
@@ -4136,6 +4195,9 @@ bool PlanningHelpers::CheckLeftLane(PlannerHNS::WayPoint* pWP1, PlannerHNS::WayP
 	return false;
 }
 
+/**
+ * Used when CARLA waypoint is received as global plan
+ */
 void PlanningHelpers::FilterWaypoints(std::vector<PlannerHNS::WayPoint*>& wp_list, PlannerHNS::WayPoint* pPrevWP)
 {
 	//Only insert waypoint from differnt lanes
@@ -4187,38 +4249,6 @@ void PlanningHelpers::FilterWaypoints(std::vector<PlannerHNS::WayPoint*>& wp_lis
 		}
 	}
 
-}
-
-
-double PlanningHelpers::frunge ( double x )
-{
-  double fx;
-
-  fx = 1.0 / ( 1.0 + 25.0 * x * x );
-
-  return fx;
-}
-
-double PlanningHelpers::fprunge ( double x )
-{
-  double bot;
-  double fx;
-
-  bot = 1.0 + 25.0 * x * x;
-  fx = -50.0 * x / ( bot * bot );
-
-  return fx;
-}
-
-double PlanningHelpers::fpprunge ( double x )
-{
-  double bot;
-  double fx;
-
-  bot = 1.0 + 25.0 * x * x;
-  fx = ( -50.0 + 3750.0 * x * x ) / ( bot * bot * bot );
-
-  return fx;
 }
 
 PlannerHNS::WayPoint PlanningHelpers::CalcCenterPoint(const std::vector<PlannerHNS::WayPoint>& points)

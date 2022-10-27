@@ -31,25 +31,29 @@ MappingHelpers::MappingHelpers() {
 MappingHelpers::~MappingHelpers() {
 }
 
-GPSPoint MappingHelpers::GetTransformationOrigin(const int& bToyotaCityMap)
-{
-	return GPSPoint();
-}
+//GPSPoint MappingHelpers::GetTransformationOrigin(const int& bToyotaCityMap)
+//{
+//	return GPSPoint();
+//}
 
 void MappingHelpers::ConvertVelocityToMeterPerSecond(RoadNetwork& map)
 {
-	if(map.roadSegments.size() == 0) return;
-
-	for(auto& l: map.roadSegments.at(0).Lanes)
+	for(auto& seg: map.roadSegments)
 	{
-		l.speed = l.speed/3.6;
-		for(auto& p: l.points)
+		for(auto& l: seg.Lanes)
 		{
-			p.v = p.v/3.6;
+			l.speed = l.speed/3.6;
+			for(auto& p: l.points)
+			{
+				p.v = p.v/3.6;
+			}
 		}
 	}
 }
 
+/**
+ * Lanes must be connected by toIds and fromIds
+ */
 void MappingHelpers::RemoveShortTwoPointsLanesFromMap(RoadNetwork& map, double l_length)
 {
 	for(auto& rseg : map.roadSegments)
@@ -216,6 +220,10 @@ void MappingHelpers::LinkTrafficLightsIntoGroups(RoadNetwork& map)
 	}
 }
 
+/**
+ * Search in the roadSegment's lanes only.
+ * No lanes connections required
+ */
 WayPoint* MappingHelpers::GetClosestWaypointFromMap(const WayPoint& pos, RoadNetwork& map, const bool& bDirectionBased)
 {
 	WayPoint* pWaypoint = nullptr;
@@ -254,6 +262,9 @@ WayPoint* MappingHelpers::GetClosestWaypointFromMap(const WayPoint& pos, RoadNet
 	return pWaypoint;
 }
 
+/**
+ * Similar to previous function, but returns a list of closest within a radius
+ */
 vector<WayPoint*> MappingHelpers::GetClosestWaypointsListFromMap(const WayPoint& pos, RoadNetwork& map, const double& distance, const bool& bDirectionBased)
 {
 	vector<WayPoint*> waypoints_list;
@@ -468,6 +479,9 @@ void MappingHelpers::GetUniqueNextLanes(const Lane* l,  const vector<Lane*>& tra
 	}
 }
 
+/**
+ * Connected maps with pointers is required
+ */
 Lane* MappingHelpers::GetLaneFromPath(const WayPoint& currPos, const std::vector<WayPoint>& currPath)
 {
 	if(currPath.size() < 1) return nullptr;
@@ -501,6 +515,9 @@ vector<string> MappingHelpers::SplitString(const string& str, const string& toke
 	return str_parts;
 }
 
+/**
+ * lane connectivity is nor required, this is done by geometry based search
+ */
 void MappingHelpers::FindAdjacentLanes(RoadNetwork& map)
 {
 	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
@@ -567,6 +584,9 @@ void MappingHelpers::FindAdjacentLanes(RoadNetwork& map)
 	}
 }
 
+/**
+ * Connect lane's waypoint to boundaries area, geometry based
+ */
 void MappingHelpers::ConnectBoundariesToWayPoints(RoadNetwork& map)
 {
 	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
@@ -612,6 +632,10 @@ void MappingHelpers::ConnectBoundariesToWayPoints(RoadNetwork& map)
 	}
 }
 
+/**
+ * Pointer linking , relation should already exist, relation could be established using using previous function
+ * ConnectBoundariesToWayPoints
+ */
 void MappingHelpers::LinkBoundariesToWayPoints(RoadNetwork& map)
 {
 	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
@@ -638,6 +662,9 @@ void MappingHelpers::LinkBoundariesToWayPoints(RoadNetwork& map)
 	}
 }
 
+/**
+ * Link using pointers, relation should already exist
+ */
 void MappingHelpers::LinkMissingBranchingWayPoints(RoadNetwork& map)
 {
 	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
@@ -656,6 +683,9 @@ void MappingHelpers::LinkMissingBranchingWayPoints(RoadNetwork& map)
 	}
 }
 
+/**
+ * Link using pointers, relation should already exist
+ */
 void MappingHelpers::LinkLanesPointers(PlannerHNS::RoadNetwork& map)
 {
 	for(auto& rs: map.roadSegments)
@@ -705,6 +735,9 @@ void MappingHelpers::LinkLanesPointers(PlannerHNS::RoadNetwork& map)
 	}
 }
 
+/**
+ * Link using pointers, relation should already exist
+ */
 void MappingHelpers::LinkMissingBranchingWayPointsV2(RoadNetwork& map)
 {
 	for(auto& rs: map.roadSegments)
@@ -751,6 +784,9 @@ void MappingHelpers::LinkMissingBranchingWayPointsV2(RoadNetwork& map)
 	}
 }
 
+/**
+ * Link using pointers, relation should already exist
+ */
 void MappingHelpers::LinkLaneChangeWaypointsPointers(PlannerHNS::RoadNetwork& map)
 {
 	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
@@ -802,6 +838,9 @@ void MappingHelpers::LinkLaneChangeWaypointsPointers(PlannerHNS::RoadNetwork& ma
 	}
 }
 
+/**
+ * Link with lane using the "linkID" information, used when loading vector map
+ */
 void MappingHelpers::LinkTrafficLightsAndStopLines(RoadNetwork& map)
 {
 
@@ -868,6 +907,9 @@ void MappingHelpers::LinkTrafficLightsAndStopLines(RoadNetwork& map)
 	}
 }
 
+/**
+ * Use in global planner, for HMI or outside signal that affect the global plan
+ */
 void MappingHelpers::UpdateMapWithSignalPose(const std::vector<WayPoint>& points, RoadNetwork& map, std::vector<WayPoint*>& updated_list, const double& min_affect_radius, const double& hit_cost)
 {
 	if(map.roadSegments.size() == 0 || points.size() == 0) return;
@@ -900,6 +942,9 @@ void MappingHelpers::UpdateMapWithSignalPose(const std::vector<WayPoint>& points
 	}
 }
 
+/**
+ * Used in global planner, change the cost at each waypoint according to an occupancy grid map
+ */
 void MappingHelpers::UpdateMapWithOccupancyGrid(OccupancyToGridMap& map_info, const std::vector<int>& data, RoadNetwork& map, std::vector<WayPoint*>& updated_list)
 {
 	PlannerHNS::Mat3 rotationMat(- map_info.center.pos.a);
@@ -944,9 +989,12 @@ void MappingHelpers::UpdateMapWithOccupancyGrid(OccupancyToGridMap& map_info, co
 	}
 }
 
+
+/**
+ * remove points at the same location, only one point should remain.
+ */
 void MappingHelpers::FixRedundantPointsLanes(std::vector<Lane>& lanes)
 {
-	//Fix Redundant point for two points in a row
 	for(unsigned int il=0; il < lanes.size(); il ++)
 	{
 		for(int ip = 1; ip < lanes.at(il).points.size(); ip++)
@@ -975,6 +1023,9 @@ void MappingHelpers::FixRedundantPointsLanes(std::vector<Lane>& lanes)
 	}
 }
 
+/**
+ * any lane should have at least 3 waypoints, this function add additional midpoints to any lane with only two waypoints.
+ */
 void MappingHelpers::FixTwoPointsLane(Lane& l)
 {
 	if(l.points.size() == 2)
@@ -1005,6 +1056,11 @@ void MappingHelpers::FixTwoPointsLane(Lane& l)
 	}
 }
 
+/**
+ * Two functionality:
+ * - Update the g_max_point_id to the max of any point id in the lanes list
+ * - FixTwoPointsLane
+ */
 void MappingHelpers::FixTwoPointsLanes(std::vector<Lane>& lanes)
 {
 	for(unsigned int il=0; il < lanes.size(); il ++)
@@ -1032,28 +1088,6 @@ void MappingHelpers::InsertWayPointToBackOfLane(const WayPoint& wp, Lane& lane, 
 		WayPoint* pFirst = &lane.points.at(0);
 		pFirst->pos = wp.pos;
 	}
-
-//	WayPoint f_wp = *pFirst;
-//	f_wp.pos = wp.pos;
-//
-//	//Give old first new ID
-//	global_id++;
-//	pFirst->id = global_id;
-//
-//	//link ids
-//	f_wp.toIds.clear(); //only see front
-//	f_wp.toIds.push_back(pFirst->id);
-//
-//	pFirst->fromIds.clear();
-//	pFirst->fromIds.push_back(f_wp.id);
-//
-//	if(lane.points.size() > 1)
-//	{
-//		lane.points.at(1).fromIds.clear();
-//		lane.points.at(1).fromIds.push_back(pFirst->id);
-//	}
-//
-//	lane.points.insert(lane.points.begin(), f_wp);
 }
 
 void MappingHelpers::InsertWayPointToFrontOfLane(const WayPoint& wp, Lane& lane, int& global_id)
@@ -1063,30 +1097,11 @@ void MappingHelpers::InsertWayPointToFrontOfLane(const WayPoint& wp, Lane& lane,
 		WayPoint* pLast = &lane.points.at(lane.points.size()-1);
 		pLast->pos = wp.pos;
 	}
-
-//	WayPoint l_wp = *pLast;
-//	l_wp.pos = wp.pos;
-//
-//	//Give old first new ID
-//	global_id++;
-//	pLast->id = global_id;
-//
-//	//link ids
-//	l_wp.fromIds.clear(); //only see front
-//	l_wp.fromIds.push_back(pLast->id);
-//
-//	pLast->toIds.clear();
-//	pLast->toIds.push_back(l_wp.id);
-//
-//	if(lane.points.size() > 1)
-//	{
-//		lane.points.at(lane.points.size()-2).toIds.clear();
-//		lane.points.at(lane.points.size()-2).toIds.push_back(pLast->id);
-//	}
-//
-//	lane.points.push_back(l_wp);
 }
 
+/**
+ * When a lane is connected only to another lane in front, make them one lane
+ */
 void MappingHelpers::StitchLanes(std::vector<Lane>& lanes, const double& min_stitching_distance, const double& max_stitching_distance)
 {
 	for(auto& l: lanes)
@@ -1107,6 +1122,9 @@ void MappingHelpers::StitchLanes(std::vector<Lane>& lanes, const double& min_sti
 	}
 }
 
+/**
+ * More geometrical stiching, but lane relations must exist
+ */
 void MappingHelpers::StitchLanes(PlannerHNS::RoadNetwork& map, const double& min_stitching_distance, const double& max_stitching_distance)
 {
 	if(map.roadSegments.size() == 0) return;
@@ -1254,6 +1272,16 @@ void MappingHelpers::FixUnconnectedLanes(std::vector<Lane>& lanes, const int& ma
 						if(DEBUG_MAP_PARSING)
 							cout << "Split this one Nicely! first_half_size: " << front_half.points.size() << ", second_hald_size: " << back_half.points.size() << endl;
 
+						if(front_half.points.size() <= 2)
+						{
+							FixTwoPointsLane(front_half);
+						}
+
+						if(back_half.points.size() <= 2)
+						{
+							FixTwoPointsLane(back_half);
+						}
+
 						pFL->fromIds.push_back(back_half.id);
 
 						if(closest_index >= 0)
@@ -1386,6 +1414,16 @@ void MappingHelpers::FixUnconnectedLanes(std::vector<Lane>& lanes, const int& ma
 					{
 						if(DEBUG_MAP_PARSING)
 							cout << "Split this one Nicely! first_half_size: " << front_half.points.size() << ", second_hald_size: " << back_half.points.size() << endl;
+
+						if(front_half.points.size() <= 2)
+						{
+							FixTwoPointsLane(front_half);
+						}
+
+						if(back_half.points.size() <= 2)
+						{
+							FixTwoPointsLane(back_half);
+						}
 
 						pBL->toIds.push_back(front_half.id);
 
@@ -1688,6 +1726,9 @@ bool MappingHelpers::IsPointExist(const WayPoint& p, const std::vector<PlannerHN
 	return false;
 }
 
+/**
+ * Not used but useful, test first
+ */
  std::vector<Lane*> MappingHelpers::GetClosestMultipleLanesFromMap(const WayPoint& pos, RoadNetwork& map, const double& distance)
 {
 	vector<Lane*> lanesList;
@@ -1739,6 +1780,9 @@ bool MappingHelpers::IsPointExist(const WayPoint& p, const std::vector<PlannerHN
 	 id_list.push_back(id);
  }
 
+ /**
+  * Connect waypoint based on the lanes connection Ids, a relation between lanes should exist first
+  */
  void MappingHelpers::ConnectWayPoints(PlannerHNS::RoadNetwork& map)
  {
  	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
@@ -2083,62 +2127,62 @@ void MappingHelpers::xyzTolla_proj(const std::string& proj_str, const PlannerHNS
  	lon = precomma + postcomma;
  }
 
-std::string MappingHelpers::FromMarkColorToText(MARKING_COLOR mark_color)
-{
-	switch(mark_color)
-	{
-	case MARK_COLOR_WHITE:
-		return "white";
-		break;
-	case MARK_COLOR_YELLOW:
-		return "yellow";
-		break;
-	case MARK_COLOR_RED:
-		return "red";
-		break;
-	case MARK_COLOR_ORANG:
-		return "orange";
-		break;
-	case MARK_COLOR_BLUE:
-		return "blue";
-		break;
-	default:
-		return "white";
-		break;
-	}
+//std::string MappingHelpers::FromMarkColorToText(MARKING_COLOR mark_color)
+//{
+//	switch(mark_color)
+//	{
+//	case MARK_COLOR_WHITE:
+//		return "";
+//		break;
+//	case MARK_COLOR_YELLOW:
+//		return "";
+//		break;
+//	case MARK_COLOR_RED:
+//		return "";
+//		break;
+//	case MARK_COLOR_ORANG:
+//		return "";
+//		break;
+//	case MARK_COLOR_BLUE:
+//		return "";
+//		break;
+//	default:
+//		return "white";
+//		break;
+//	}
+//
+//	return "white";
+//}
 
-	return "white";
-}
-
-std::string MappingHelpers::FromLineTypeToText(LINE_TYPE type)
-{
-	switch(type)
-	{
-	case GENERAL_LINE:
-		return "default";
-		break;
-	case DEFAULT_WHITE_LINE:
-		return "whiteline";
-		break;
-	case DEFAULT_YELLOW_LINE:
-		return "yellowline";
-		break;
-	case CONTINUOUS_LINE:
-		return "onepiece";
-		break;
-	case SEPARATION_LINE:
-		return "separation";
-		break;
-	case SUPPORT_LINE:
-		return "support";
-		break;
-	default:
-		return "default";
-		break;
-	}
-
-	return "default";
-}
+//std::string MappingHelpers::FromLineTypeToText(LINE_TYPE type)
+//{
+//	switch(type)
+//	{
+//	case GENERAL_LINE:
+//		return "default";
+//		break;
+//	case DEFAULT_WHITE_LINE:
+//		return "whiteline";
+//		break;
+//	case DEFAULT_YELLOW_LINE:
+//		return "yellowline";
+//		break;
+//	case CONTINUOUS_LINE:
+//		return "onepiece";
+//		break;
+//	case SEPARATION_LINE:
+//		return "separation";
+//		break;
+//	case SUPPORT_LINE:
+//		return "support";
+//		break;
+//	default:
+//		return "default";
+//		break;
+//	}
+//
+//	return "default";
+//}
 
 std::string MappingHelpers::FromLightTypeToText(TRAFFIC_LIGHT_TYPE type)
 {
@@ -2208,39 +2252,39 @@ std::string MappingHelpers::FromSignTypeToText(TRAFFIC_SIGN_TYPE type)
 	}
 }
 
-MARKING_COLOR MappingHelpers::FromTextToMarkColor(std::string mark_color)
-{
-	if(mark_color.compare("white") == 0)
-		return MARK_COLOR_WHITE;
-	else if(mark_color.compare("yellow") == 0)
-		return MARK_COLOR_YELLOW;
-	else if(mark_color.compare("red") == 0)
-		return MARK_COLOR_RED;
-	else if(mark_color.compare("orange") == 0)
-		return MARK_COLOR_ORANG;
-	else if(mark_color.compare("blue") == 0)
-		return MARK_COLOR_BLUE;
-	else
-		return MARK_COLOR_WHITE;
+//MARKING_COLOR MappingHelpers::FromTextToMarkColor(std::string mark_color)
+//{
+//	if(mark_color.compare("white") == 0)
+//		return MARK_COLOR_WHITE;
+//	else if(mark_color.compare("yellow") == 0)
+//		return MARK_COLOR_YELLOW;
+//	else if(mark_color.compare("red") == 0)
+//		return MARK_COLOR_RED;
+//	else if(mark_color.compare("orange") == 0)
+//		return MARK_COLOR_ORANG;
+//	else if(mark_color.compare("blue") == 0)
+//		return MARK_COLOR_BLUE;
+//	else
+//		return MARK_COLOR_WHITE;
+//
+//}
 
-}
-
-LINE_TYPE MappingHelpers::FromTextToLineType(std::string type)
-{
-	if(type.compare("default") == 0)
-		return GENERAL_LINE;
-	else if(type.compare("whiteline") == 0)
-		return DEFAULT_WHITE_LINE;
-	else if(type.compare("onepiece") == 0)
-		return CONTINUOUS_LINE;
-	else if(type.compare("separation") == 0)
-		return SEPARATION_LINE;
-	else if(type.compare("support") == 0)
-		return SUPPORT_LINE;
-	else
-		return GENERAL_LINE;
-
-}
+//LINE_TYPE MappingHelpers::FromTextToLineType(std::string type)
+//{
+//	if(type.compare("default") == 0)
+//		return GENERAL_LINE;
+//	else if(type.compare("whiteline") == 0)
+//		return DEFAULT_WHITE_LINE;
+//	else if(type.compare("onepiece") == 0)
+//		return CONTINUOUS_LINE;
+//	else if(type.compare("separation") == 0)
+//		return SEPARATION_LINE;
+//	else if(type.compare("support") == 0)
+//		return SUPPORT_LINE;
+//	else
+//		return GENERAL_LINE;
+//
+//}
 
 TRAFFIC_LIGHT_TYPE MappingHelpers::FromTextToLightType(std::string light_type)
 {
@@ -2287,42 +2331,43 @@ TRAFFIC_SIGN_TYPE MappingHelpers::FromTextToSignType(std::string sign_type)
 	else
 		return UNKNOWN_SIGN;
 }
-LINE_TYPE MappingHelpers::FromNumberToLineType(int type)
-{
-	if(type < 0)
-		return GENERAL_LINE;
-	else if(type == 0)
-		return DEFAULT_WHITE_LINE;
-	else if(type == 1)
-		return CONTINUOUS_LINE;
-	else if(type == 2)
-		return SEPARATION_LINE;
-	else if(type == 3)
-		return SUPPORT_LINE;
-	else if(type == 4)
-		return GENERAL_LINE;
-	else
-		return DEFAULT_WHITE_LINE;
 
-}
+//LINE_TYPE MappingHelpers::FromNumberToLineType(int type)
+//{
+//	if(type < 0)
+//		return GENERAL_LINE;
+//	else if(type == 0)
+//		return DEFAULT_WHITE_LINE;
+//	else if(type == 1)
+//		return CONTINUOUS_LINE;
+//	else if(type == 2)
+//		return SEPARATION_LINE;
+//	else if(type == 3)
+//		return SUPPORT_LINE;
+//	else if(type == 4)
+//		return GENERAL_LINE;
+//	else
+//		return DEFAULT_WHITE_LINE;
+//
+//}
 
-MARKING_COLOR MappingHelpers::FromNumberToMarkColor(int color)
-{
-	if(color < 0)
-		return MARK_COLOR_BLUE;
-	else if(color == 0)
-		return MARK_COLOR_WHITE;
-	else if(color == 1)
-		return MARK_COLOR_YELLOW;
-	else if(color == 2)
-		return MARK_COLOR_RED;
-	else if(color == 3)
-		return MARK_COLOR_ORANG;
-	else if(color == 4)
-		return MARK_COLOR_BLUE;
-	else
-		return MARK_COLOR_WHITE;
-}
+//MARKING_COLOR MappingHelpers::FromNumberToMarkColor(int color)
+//{
+//	if(color < 0)
+//		return MARK_COLOR_BLUE;
+//	else if(color == 0)
+//		return MARK_COLOR_WHITE;
+//	else if(color == 1)
+//		return MARK_COLOR_YELLOW;
+//	else if(color == 2)
+//		return MARK_COLOR_RED;
+//	else if(color == 3)
+//		return MARK_COLOR_ORANG;
+//	else if(color == 4)
+//		return MARK_COLOR_BLUE;
+//	else
+//		return MARK_COLOR_WHITE;
+//}
 
 TRAFFIC_LIGHT_TYPE MappingHelpers::FromNumberToLightType(int type)
 {

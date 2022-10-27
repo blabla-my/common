@@ -734,10 +734,7 @@ void LocalPlannerH::ReInitializePlanner(const WayPoint& start_pose)
 			PlanningHelpers::ExtractPartFromPointToDistanceFast(m_TotalOriginalPath.at(i), state,
 					m_pCurrentBehaviorState->m_pParams->horizonDistance ,
 					m_pCurrentBehaviorState->m_pParams->pathDensity ,
-					centerTrajectorySmoothed,
-					m_pCurrentBehaviorState->m_pParams->smoothingDataWeight,
-					m_pCurrentBehaviorState->m_pParams->smoothingSmoothWeight,
-					m_pCurrentBehaviorState->m_pParams->smoothingToleranceError);
+					centerTrajectorySmoothed);
 
 			m_TotalPath.push_back(centerTrajectorySmoothed);
 		}

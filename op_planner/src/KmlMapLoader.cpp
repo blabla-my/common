@@ -377,8 +377,9 @@ std::vector<Line> KmlMapLoader::GetLinesList(TiXmlElement* pElem)
 			l.id = GetIDsFromPrefix(line_ID, "LIID", "RdID").at(0);
 			l.roadID = GetIDsFromPrefix(line_ID, "RdID", "Wid").at(0);
 			l.width = GetDoubleFromPrefix(line_ID, "Wid", "Typ").at(0);
-			l.type = MappingHelpers::FromTextToLineType(GetStringsFromPrefix(line_ID, "Typ", "Clr").at(0));
-			l.color = MappingHelpers::FromTextToMarkColor(GetStringsFromPrefix(line_ID, "Clr", "LLn").at(0));
+//			l.type = MappingHelpers::FromTextToLineType(GetStringsFromPrefix(line_ID, "Typ", "Clr").at(0));
+			l.type = LineTypesStr.GetEnum(GetStringsFromPrefix(line_ID, "Typ", "Clr").at(0));
+			l.color = MarkColorsStr.GetEnum(GetStringsFromPrefix(line_ID, "Clr", "LLn").at(0));
 			l.left_lane_ids = GetIDsFromPrefix(line_ID, "LLn", "RLn");
 			l.right_lane_ids = GetIDsFromPrefix(line_ID, "RLn", "");
 

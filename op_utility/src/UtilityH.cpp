@@ -240,6 +240,20 @@ time_t UtilityH::GetLongTime(const struct timespec& srcT)
 	return dstT;
 }
 
+bool UtilityH::InsertUniqueStringCase(std::vector<std::string>& list, const std::string& str)
+{
+	for(auto& s: list)
+	{
+		if(s.compare(str) == 0)
+		{
+			return false;
+		}
+	}
+
+	list.push_back(str);
+	return true;
+}
+
 std::string UtilityH::GetFileNameFromPathName(const std::string& path_with_name)
 {
 	int index_last = path_with_name.find_last_of("/");

@@ -40,6 +40,8 @@ public:
 	static std::vector<int> GetIDsFromPrefix(const std::string& str, const std::string& prefix, const std::string& postfix);
 	static std::pair<ACTION_TYPE, double> GetActionPairFromPrefix(const std::string& str, const std::string& prefix, const std::string& postfix);
 	static std::vector<std::string> SplitString(const std::string& str, const std::string& token);
+	static std::vector<std::string> GetStringsFromPrefix(const std::string& str, const std::string& prefix, const std::string& postfix);
+	static std::vector<double> GetDoubleFromPrefix(const std::string& str, const std::string& prefix, const std::string& postfix);
 
 private:
 	PlannerHNS::RoadNetwork* _pMap;
@@ -56,8 +58,6 @@ private:
 	std::vector<StopLine> GetStopLinesList(TiXmlElement* pElem);
 	std::vector<Lane> GetLanesList(TiXmlElement* pElem);
 	std::vector<RoadSegment> GetRoadSegmentsList(TiXmlElement* pElem);
-	std::vector<std::string> GetStringsFromPrefix(const std::string& str, const std::string& prefix, const std::string& postfix);
-	std::vector<double> GetDoubleFromPrefix(const std::string& str, const std::string& prefix, const std::string& postfix);
 	std::vector<WayPoint> GetCenterLaneData(TiXmlElement* pElem, const int& currLaneID);
 	std::vector<WayPoint> GetCenterLaneDataVer0(TiXmlElement* pElem, const int& currLaneID);
 	std::vector<WayPoint> GetWaypointsData(TiXmlElement* pElem);

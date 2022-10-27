@@ -18,6 +18,7 @@
 namespace PlannerHNS {
 
 #define distance2points(from , to) sqrt(pow(to.x - from.x, 2) + pow(to.y - from.y, 2))
+#define db2p(from , to) hypot(to.pos.y - from.pos.y, to.pos.x - from.pos.x)
 #define distance2pointsSqr(from , to) pow(to.x - from.x, 2) + pow(to.y - from.y, 2)
 #define pointNorm(v) sqrt(v.x*v.x + v.y*v.y)
 #define angle2points(from , to) atan2(to.y - from.y, to.x - from.x )
@@ -50,6 +51,9 @@ public:
 
 	static bool GetRelativeInfoDirectionLimited(const std::vector<WayPoint>& trajectory, const WayPoint& p, RelativeInfo& info, const int& prevIndex = 0);
 
+	/**
+	 *
+	 */
 	static bool GetRelativeInfoLimited(const std::vector<WayPoint>& trajectory, const WayPoint& p, RelativeInfo& info, const int& prevIndex = 0);
 
 	static bool GetRelativeInfoDirection(const std::vector<WayPoint>& trajectory, const WayPoint& p, RelativeInfo& info, const int& prevIndex =0);
@@ -104,6 +108,10 @@ public:
 
 	//static double CalcAngleAndCostSimple(std::vector<WayPoint>& path, const double& lastCost = 0);
 
+	static int SmoothCurve(std::vector<WayPoint>& path, double smooth_limit = 0.85, double nMaxIterations = 100);
+
+	static int IsSmoothCurve(const std::vector<WayPoint>& curve, double smooth_limit = 0.85);
+
 	static void CalcAngleAndCurvatureCost(std::vector<WayPoint>& path);
 
 	static void CalcDtLaneInfo(std::vector<WayPoint>& path);
@@ -113,7 +121,7 @@ public:
 	static double GetAccurateDistanceOnTrajectory(std::vector<WayPoint>& path, const int& start_index, const WayPoint& p);
 
 	static void ExtractPartFromPointToDistanceFast(const std::vector<WayPoint>& originalPath, const WayPoint& pos, const double& minDistance,
-				const double& pathDensity, std::vector<WayPoint>& extractedPath, const double& SmoothDataWeight, const double& SmoothWeight, const double& SmoothTolerance);
+				const double& pathDensity, std::vector<WayPoint>& extractedPath);
 
 	static int ExtractPartFromPointToDistanceDirectionFast(const std::vector<WayPoint>& originalPath, const WayPoint& pos, const double& minDistance,
 			const double& pathDensity, std::vector<WayPoint>& extractedPath, int prev_index = 0);
@@ -174,12 +182,6 @@ public:
 	static WayPoint* CheckLaneExits(const std::vector<WayPoint*>& nodes, const Lane* pL);
 
 	static WayPoint* CheckNodeExits(const std::vector<WayPoint*>& nodes, const WayPoint* pL);
-
-	static WayPoint* CreateLaneHeadCell(Lane* pLane, WayPoint* pLeft, WayPoint* pRight,
-			WayPoint* pBack);
-
-	static double GetLanePoints(Lane* l, const WayPoint& prevWayPointIndex,
-			const double& minDistance , const double& prevCost, std::vector<WayPoint>& points);
 
 	static WayPoint* GetMinCostCell(const std::vector<WayPoint*>& cells, const std::vector<int>& globalPathIds);
 
@@ -254,12 +256,6 @@ public:
 	static void FilterWaypoints(std::vector<PlannerHNS::WayPoint*>& wp_list, PlannerHNS::WayPoint* pPrevWP);
 
 	static PlannerHNS::WayPoint CalcCenterPoint(const std::vector<PlannerHNS::WayPoint>& points);
-
-	static double frunge ( double x );
-
-	static double fprunge ( double x );
-
-	static double fpprunge ( double x );
 
 };
 

@@ -58,6 +58,10 @@ public:
 	static void GetImageNamesInAllSubfoldersCam1Cam2(const std::string& path, const std::vector<std::string>& extentions, std::vector<std::string>& out_list, int dir_level = 0);
 	static std::string GetFileNameFromPathName(const std::string& path_with_name);
 	static std::string GetFileNameWithoutExtention(const std::string& file_name);
+	/**
+	 * Returns true if inserted , false otherwise
+	 */
+	static bool InsertUniqueStringCase(std::vector<std::string>& list, const std::string& str);
 };
 
 class PIDController

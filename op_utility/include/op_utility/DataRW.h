@@ -317,6 +317,34 @@ public:
 	}
 };
 
+class DatasetTrajectoryReaderB : public SimpleReaderBase
+{
+public:
+	struct TimePoint
+	{
+		double t;
+		double x;
+		double y;
+		double z;
+		double lon;
+		double lat;
+		double alt;
+		double roll;
+		double pitch;
+		double yaw;
+	};
+
+	DatasetTrajectoryReaderB(const std::string& fileName, const char& separator) : SimpleReaderBase(fileName, 1, "", separator)
+	{
+		header_ = "";
+	}
+	virtual ~DatasetTrajectoryReaderB(){}
+
+	bool ReadNextLine(TimePoint& data);
+	int ReadAllData(std::vector<TimePoint>& data_list);
+	int ReadAllData();
+};
+
 class DestinationsDataFileReader : public SimpleReaderBase
 {
 public:

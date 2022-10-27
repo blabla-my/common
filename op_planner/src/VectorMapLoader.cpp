@@ -653,8 +653,8 @@ void VectorMapLoader::ExtractLines(UtilityHNS::AisanLinesFileReader* pLineData, 
 	Line l;
 	for(auto& line : pLineData->m_data_list)
 	{
-		LINE_TYPE l_type = GENERAL_LINE;
-		MARKING_COLOR l_color =  MARK_COLOR_WHITE;
+		LINE_TYPE l_type = DOTTED_LINE;
+		MARKING_COLOR l_color =  MARK_WHITE;
 		double l_width = 0;
 		int l_original_type = 0;
 		bool bFound = false;
@@ -662,8 +662,8 @@ void VectorMapLoader::ExtractLines(UtilityHNS::AisanLinesFileReader* pLineData, 
 		{
 			if(wl.LID == line.LID)
 			{
-				l_type = DEFAULT_WHITE_LINE;
-				l_color =  MARK_COLOR_WHITE;
+				l_type = DOTTED_LINE;
+				l_color =  MARK_WHITE;
 				l_width = wl.Width;
 				l_original_type  = wl.type;
 				bFound = true;
