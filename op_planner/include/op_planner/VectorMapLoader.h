@@ -82,7 +82,7 @@ private:
 			const std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints>& points_data, const GPSPoint& origin, RoadNetwork& map);
 	bool GetWayPoint(const int& id, const int& laneID,const double& refVel, const int& did, UtilityHNS::AisanPointsFileReader* pPointsData,
 				UtilityHNS::AisanCenterLinesFileReader* pDtData, const GPSPoint& origin, WayPoint& way_point);
-	int ReplaceMyID(int& id, const std::vector<std::pair<int,int> >& rep_list);
+	int ReplaceMyID(OPID& id, const std::vector<std::pair<int,int> >& rep_list);
 	void ExtractSignalData(const std::vector<UtilityHNS::AisanSignalFileReader::AisanSignal>& signal_data,
 				const std::vector<UtilityHNS::AisanVectorFileReader::AisanVector>& vector_data,
 				const std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints>& points_data, const GPSPoint& origin, RoadNetwork& map);

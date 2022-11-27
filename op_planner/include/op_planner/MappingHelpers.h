@@ -75,7 +75,7 @@ public:
 	 * @param min_d
 	 * @param max_d
 	 */
-	static void FindAdjacentSingleLane(RoadNetwork& map, const int& lane_id, const int& dir,  const double& min_d = 1.2, const double& max_d = 3.5);
+	static void FindAdjacentSingleLane(RoadNetwork& map, const OPID& lane_id, const int& dir,  const double& min_d = 1.2, const double& max_d = 3.5);
 
 	static void ConnectBoundariesToWayPoints(RoadNetwork& map);
 

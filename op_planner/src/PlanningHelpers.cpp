@@ -1284,15 +1284,15 @@ double PlanningHelpers::GetDistanceToClosestStopLineAndCheck(const std::vector<W
 
 	for(unsigned int i=info.iBack; i<path.size(); i++)
 	{
-		if(path.at(i).stopLineID > 0 && path.at(i).pLane)
+		if(path.at(i).stopLineId > 0 && path.at(i).pLane)
 		{
 
 			for(unsigned int j = 0; j < path.at(i).pLane->stopLines.size(); j++)
 			{
 
-				if(path.at(i).pLane->stopLines.at(j).id == path.at(i).stopLineID)
+				if(path.at(i).pLane->stopLines.at(j).id == path.at(i).stopLineId)
 				{
-					stopLineID = path.at(i).stopLineID;
+					stopLineID = path.at(i).stopLineId;
 
 					RelativeInfo stop_info;
 					WayPoint stopLineWP ;
@@ -1302,7 +1302,7 @@ double PlanningHelpers::GetDistanceToClosestStopLineAndCheck(const std::vector<W
 
 					if(localDistance > giveUpDistance)
 					{
-						stopSignID = path.at(i).pLane->stopLines.at(j).stopSignID;
+						stopSignID = path.at(i).pLane->stopLines.at(j).stopSignId;
 						if(path.at(i).pLane->stopLines.at(j).lightIds.size() > 0)
 							trafficLightID = path.at(i).pLane->stopLines.at(j).lightIds.at(0);
 						return localDistance;
@@ -1388,7 +1388,7 @@ double PlanningHelpers::GetDistanceToClosestStopLineAndCheckV2(const std::vector
 		{
 			min_distance = d;
 			stopLineID = sl.id;
-			stopSignID = sl.stopSignID;
+			stopSignID = sl.stopSignId;
 			trafficLightIDs = sl.lightIds;
 		}
 	}

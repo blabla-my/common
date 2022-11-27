@@ -96,37 +96,69 @@ void KmlMapLoader::LoadKML(const std::string& kmlFile, RoadNetwork& map)
 	}
 	pHeadElem = GetHeadElement(pElem);
 
-	std::cout << " >> Load Lanes from KML file .. " << std::endl;
 	std::vector<Lane> laneLinksList = GetLanesList(pHeadElem);
+	std::cout << " >> Load Lanes from KML file .. " << laneLinksList.size() << std::endl;
 
 	MappingHelpers::FixTwoPointsLanes(laneLinksList);
 
 	map.roadSegments.clear();
-	map.roadSegments = GetRoadSegmentsList(pHeadElem);
+	std::vector<RoadSegment> segments = GetRoadSegmentsList(pHeadElem);
+	std::cout << " >> Load RoadSegments from KML file .. " << segments.size() << std::endl;
 
-	std::cout << " >> Load Traffic lights from KML file .. " << std::endl;
+	if(segments.size() <= 1)
+	{
+		RoadSegment seg;
+		for(auto& l: laneLinksList)
+		{
+			seg.Lanes.push_back(l);
+		}
+		map.roadSegments.push_back(seg);
+	}
+	else
+	{
+		for(auto& seg: segments)
+		{
+			for(auto& l: laneLinksList)
+			{
+				if(l.roadId == seg.id)
+				{
+					PlanningHelpers::CalcAngleAndCost(l.points);
+					seg.Lanes.push_back(l);
+				}
+			}
+
+			if(seg.Lanes.size() > 0)
+			{
+				map.roadSegments.push_back(seg);
+			}
+		}
+	}
+
+
+
 	std::vector<TrafficLight> trafficLights = GetTrafficLightsList(pHeadElem);
+	std::cout << " >> Load Traffic lights from KML file .. " << trafficLights.size() << std::endl;
 
-	std::cout << " >> Load Stop lines from KML file .. " << std::endl;
 	std::vector<StopLine> stopLines = GetStopLinesList(pHeadElem);
+	std::cout << " >> Load Stop lines from KML file .. " <<  stopLines.size() << std::endl;
 
-	std::cout << " >> Load Signes from KML file .. " << std::endl;
 	std::vector<TrafficSign> signs = GetTrafficSignsList(pHeadElem);
+	std::cout << " >> Load Signes from KML file .. " << signs.size() << std::endl;
 
-	std::cout << " >> Load Crossings from KML file .. " << std::endl;
 	std::vector<Crossing> crossings = GetCrossingsList(pHeadElem);
+	std::cout << " >> Load Crossings from KML file .. " << crossings.size() << std::endl;
 
-	std::cout << " >> Load Markings from KML file .. " << std::endl;
 	std::vector<Marking> markings = GetMarkingsList(pHeadElem);
+	std::cout << " >> Load Markings from KML file .. " << markings.size() << std::endl;
 
-	std::cout << " >> Load Road boundaries from KML file .. " << std::endl;
 	std::vector<Boundary> boundaries = GetBoundariesList(pHeadElem);
+	std::cout << " >> Load Road boundaries from KML file .. " << boundaries .size() << std::endl;
 
-	std::cout << " >> Load Curbs from KML file .. " << std::endl;
 	std::vector<Curb> curbs = GetCurbsList(pHeadElem);
+	std::cout << " >> Load Curbs from KML file .. " << curbs.size() << std::endl;
 
-	std::cout << " >> Load Lines from KML file .. " << std::endl;
 	std::vector<Line> lines = GetLinesList(pHeadElem);
+	std::cout << " >> Load Lines from KML file .. " << lines.size() << std::endl;
 
 	map.signs.clear();
 	map.signs = signs;
@@ -146,16 +178,6 @@ void KmlMapLoader::LoadKML(const std::string& kmlFile, RoadNetwork& map)
 	map.lines.clear();
 	map.lines = lines;
 
-	//Fill the relations
-	for(unsigned int i= 0; i<map.roadSegments.size(); i++ )
-	{
-		for(unsigned int j=0; j < laneLinksList.size(); j++)
-		{
-			PlanningHelpers::CalcAngleAndCost(laneLinksList.at(j).points);
-			map.roadSegments.at(i).Lanes.push_back(laneLinksList.at(j));
-		}
-	}
-
 	std::cout << " >> Link lanes and waypoints with pointers ... " << std::endl;
 	//Link Lanes by pointers
 	MappingHelpers::LinkLanesPointers(map);
@@ -169,9 +191,12 @@ void KmlMapLoader::LoadKML(const std::string& kmlFile, RoadNetwork& map)
 	MappingHelpers::LinkLaneChangeWaypointsPointers(map);
 
 
-	if(_bLaneStitch && map.roadSegments.size() > 0)
+	if(_bLaneStitch)
 	{
-		MappingHelpers::StitchLanes(map.roadSegments.at(0).Lanes);
+		for(auto& seg: map.roadSegments)
+		{
+			MappingHelpers::StitchLanes(seg.Lanes);
+		}
 	}
 
 	map.stopLines = stopLines;
@@ -199,7 +224,7 @@ void KmlMapLoader::LoadKML(const std::string& kmlFile, RoadNetwork& map)
 					map.stopLines.at(isl).pLane = &map.roadSegments.at(rs).Lanes.at(i);
 					map.roadSegments.at(rs).Lanes.at(i).stopLines.push_back(map.stopLines.at(isl));
 					WayPoint wp((map.stopLines.at(isl).points.at(0).pos.x+map.stopLines.at(isl).points.at(1).pos.x)/2.0, (map.stopLines.at(isl).points.at(0).pos.y+map.stopLines.at(isl).points.at(1).pos.y)/2.0, (map.stopLines.at(isl).points.at(0).pos.z+map.stopLines.at(isl).points.at(1).pos.z)/2.0, (map.stopLines.at(isl).points.at(0).pos.a+map.stopLines.at(isl).points.at(1).pos.a)/2.0);
-					map.roadSegments.at(rs).Lanes.at(i).points.at(PlanningHelpers::GetClosestNextPointIndexFast(map.roadSegments.at(rs).Lanes.at(i).points, wp)).stopLineID = map.stopLines.at(isl).id;
+					map.roadSegments.at(rs).Lanes.at(i).points.at(PlanningHelpers::GetClosestNextPointIndexFast(map.roadSegments.at(rs).Lanes.at(i).points, wp)).stopLineId = map.stopLines.at(isl).id;
 				}
 			}
 		}
@@ -570,7 +595,7 @@ std::vector<StopLine> KmlMapLoader::GetStopLinesList(TiXmlElement* pElem)
 			StopLine sl;
 			sl.id = GetIDsFromPrefix(tfID, "SLID", "LnID").at(0);
 			sl.laneId = GetIDsFromPrefix(tfID, "LnID", "TSID").at(0);
-			sl.stopSignID = GetIDsFromPrefix(tfID, "TSID", "TLID").at(0);
+			sl.stopSignId = GetIDsFromPrefix(tfID, "TSID", "TLID").at(0);
 			sl.lightIds = GetIDsFromPrefix(tfID, "TLID", "");
 
 
@@ -936,7 +961,7 @@ std::vector<WayPoint> KmlMapLoader::GetCenterLaneData(TiXmlElement* pElem, const
 				ids = GetIDsFromPrefix(add_info_list.at(i), "SLine", "CType");
 				if(ids.size() > 0)
 				{
-					gps_points.at(i).stopLineID = ids.at(0);
+					gps_points.at(i).stopLineId = ids.at(0);
 				}
 
 				ids = GetIDsFromPrefix(add_info_list.at(i), "CType", "");

@@ -627,7 +627,7 @@ void VectorMapLoader::ExtractStopLinesDataV2(const std::vector<UtilityHNS::Aisan
 		if(stop_line_data.at(ist).TLID>0)
 			sl.lightIds.push_back(stop_line_data.at(ist).TLID);
 		else
-			sl.stopSignID = 100+ist;
+			sl.stopSignId = 100+ist;
 
 		UtilityHNS::AisanLinesFileReader::AisanLine* pLine = pLineData->GetDataRowById(stop_line_data.at(ist).LID);
 		if(pLine != nullptr)
@@ -1186,7 +1186,7 @@ bool VectorMapLoader::GetWayPoint(const int& id, const int& laneID,const double&
 	return false;
 }
 
-int VectorMapLoader::ReplaceMyID(int& id,const std::vector<std::pair<int,int> >& rep_list)
+int VectorMapLoader::ReplaceMyID(OPID& id,const std::vector<std::pair<int,int> >& rep_list)
 {
 	for(unsigned int i=0; i < rep_list.size(); i++)
 	{
@@ -1251,7 +1251,7 @@ void VectorMapLoader::ExtractStopLinesData(const std::vector<UtilityHNS::AisanSt
 		if(stop_line_data.at(ist).TLID>0)
 			sl.lightIds.push_back(stop_line_data.at(ist).TLID);
 		else
-			sl.stopSignID = 100+ist;
+			sl.stopSignId = 100+ist;
 
 		for(unsigned int il=0; il < line_data.size(); il++)
 		{
@@ -1438,10 +1438,10 @@ void VectorMapLoader::LinkTrafficLightsAndStopLinesConData(const std::vector<Uti
 							map.stopLines.at(isl).laneId = map.roadSegments.at(rs).Lanes.at(i).id;
 							map.stopLines.at(isl).pLane = &map.roadSegments.at(rs).Lanes.at(i);
 							map.stopLines.at(isl).lightIds.push_back(data_conn.SID);
-							map.stopLines.at(isl).stopSignID = data_conn.SSID;
+							map.stopLines.at(isl).stopSignId = data_conn.SSID;
 							map.roadSegments.at(rs).Lanes.at(i).stopLines.push_back(map.stopLines.at(isl));
 							WayPoint wp((map.stopLines.at(isl).points.at(0).pos.x+map.stopLines.at(isl).points.at(1).pos.x)/2.0, (map.stopLines.at(isl).points.at(0).pos.y+map.stopLines.at(isl).points.at(1).pos.y)/2.0, (map.stopLines.at(isl).points.at(0).pos.z+map.stopLines.at(isl).points.at(1).pos.z)/2.0, (map.stopLines.at(isl).points.at(0).pos.a+map.stopLines.at(isl).points.at(1).pos.a)/2.0);
-							map.roadSegments.at(rs).Lanes.at(i).points.at(PlanningHelpers::GetClosestNextPointIndexFast(map.roadSegments.at(rs).Lanes.at(i).points, wp)).stopLineID = map.stopLines.at(isl).id;
+							map.roadSegments.at(rs).Lanes.at(i).points.at(PlanningHelpers::GetClosestNextPointIndexFast(map.roadSegments.at(rs).Lanes.at(i).points, wp)).stopLineId = map.stopLines.at(isl).id;
 						}
 					}
 				}

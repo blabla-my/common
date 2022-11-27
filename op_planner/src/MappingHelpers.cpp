@@ -860,7 +860,7 @@ void MappingHelpers::LinkTrafficLightsAndStopLines(RoadNetwork& map)
 						map.stopLines.at(isl).pLane = pWP->pLane;
 						map.roadSegments.at(rs).Lanes.at(i).stopLines.push_back(map.stopLines.at(isl));
 
-						pWP->stopLineID = map.stopLines.at(isl).id;
+						pWP->stopLineId = map.stopLines.at(isl).id;
 
 						for(unsigned int itl = 0; itl < map.trafficLights.size(); itl++)
 						{
@@ -916,27 +916,30 @@ void MappingHelpers::UpdateMapWithSignalPose(const std::vector<WayPoint>& points
 
 	for(auto& p: points)
 	{
-		for(auto& l: map.roadSegments.at(0).Lanes)
+		for(auto& seg: map.roadSegments)
 		{
-			RelativeInfo inf;
-			int dummy_index = 0;
-			PlanningHelpers::GetRelativeInfoLimited(l.points, p, inf, dummy_index);
-
-			if(!inf.bAfter && !inf.bBefore && fabs(inf.perp_distance) < min_affect_radius)
+			for(auto& l: seg.Lanes)
 			{
-				if(hit_cost < 0)
+				RelativeInfo inf;
+				int dummy_index = 0;
+				PlanningHelpers::GetRelativeInfoLimited(l.points, p, inf, dummy_index);
+
+				if(!inf.bAfter && !inf.bBefore && fabs(inf.perp_distance) < min_affect_radius)
 				{
-					l.points.at(inf.iBack).pFronts.clear();
-					l.points.at(inf.iFront).pBacks.clear();
+					if(hit_cost < 0)
+					{
+						l.points.at(inf.iBack).pFronts.clear();
+						l.points.at(inf.iFront).pBacks.clear();
+					}
+					else
+					{
+						l.points.at(inf.iBack).actionCost.push_back(std::make_pair(PlannerHNS::CHANGE_DESTINATION, hit_cost));
+						updated_list.push_back(&l.points.at(inf.iBack));
+						l.points.at(inf.iFront).actionCost.push_back(std::make_pair(PlannerHNS::CHANGE_DESTINATION, hit_cost));
+						updated_list.push_back(&l.points.at(inf.iFront));
+					}
+					break;
 				}
-				else
-				{
-					l.points.at(inf.iBack).actionCost.push_back(std::make_pair(PlannerHNS::CHANGE_DESTINATION, hit_cost));
-					updated_list.push_back(&l.points.at(inf.iBack));
-					l.points.at(inf.iFront).actionCost.push_back(std::make_pair(PlannerHNS::CHANGE_DESTINATION, hit_cost));
-					updated_list.push_back(&l.points.at(inf.iFront));
-				}
-				break;
 			}
 		}
 	}
@@ -1127,36 +1130,37 @@ void MappingHelpers::StitchLanes(std::vector<Lane>& lanes, const double& min_sti
  */
 void MappingHelpers::StitchLanes(PlannerHNS::RoadNetwork& map, const double& min_stitching_distance, const double& max_stitching_distance)
 {
-	if(map.roadSegments.size() == 0) return;
-
-	for(auto& l: map.roadSegments.at(0).Lanes)
+	for(auto& seg: map.roadSegments)
 	{
-		if(l.toLanes.size() > 0)
+		for(auto& l: seg.Lanes)
 		{
-			if(l.points.size() > 1 && l.toLanes.at(0)->points.size() > 1)
+			if(l.toLanes.size() > 0)
 			{
-				WayPoint* pWP1 = &l.points.at(l.points.size()-1);
-				WayPoint* pWP2 = &l.toLanes.at(0)->points.at(0);
-				RelativeInfo inf;
-				int temp_index = 0;
-				PlanningHelpers::GetRelativeInfoLimited(l.toLanes.at(0)->points, *pWP1, inf, temp_index);
-				double d = hypot(pWP2->pos.y - pWP1->pos.y, pWP2->pos.x - pWP1->pos.x);
-
-				//Create new waypoint
-				if(inf.bBefore && d > min_stitching_distance && d < max_stitching_distance)
+				if(l.points.size() > 1 && l.toLanes.at(0)->points.size() > 1)
 				{
-					map.g_max_point_id++;
-					WayPoint final_wp = *pWP1;
-					final_wp.id = map.g_max_point_id;
-					final_wp.pos = pWP2->pos;
+					WayPoint* pWP1 = &l.points.at(l.points.size()-1);
+					WayPoint* pWP2 = &l.toLanes.at(0)->points.at(0);
+					RelativeInfo inf;
+					int temp_index = 0;
+					PlanningHelpers::GetRelativeInfoLimited(l.toLanes.at(0)->points, *pWP1, inf, temp_index);
+					double d = hypot(pWP2->pos.y - pWP1->pos.y, pWP2->pos.x - pWP1->pos.x);
 
-					final_wp.fromIds.clear();
-					final_wp.fromIds.push_back(pWP1->id);
+					//Create new waypoint
+					if(inf.bBefore && d > min_stitching_distance && d < max_stitching_distance)
+					{
+						map.g_max_point_id++;
+						WayPoint final_wp = *pWP1;
+						final_wp.id = map.g_max_point_id;
+						final_wp.pos = pWP2->pos;
 
-					pWP1->toIds.clear();
-					pWP1->toIds.push_back(final_wp.id);
+						final_wp.fromIds.clear();
+						final_wp.fromIds.push_back(pWP1->id);
 
-					l.points.push_back(final_wp);
+						pWP1->toIds.clear();
+						pWP1->toIds.push_back(final_wp.id);
+
+						l.points.push_back(final_wp);
+					}
 				}
 			}
 		}
@@ -1476,7 +1480,7 @@ void MappingHelpers::LinkTrafficLightsAndStopLinesV2(RoadNetwork& map)
 						map.stopLines.at(isl).pLane = pWP->pLane;
 						map.roadSegments.at(rs).Lanes.at(i).stopLines.push_back(map.stopLines.at(isl));
 
-						pWP->stopLineID = map.stopLines.at(isl).id;
+						pWP->stopLineId = map.stopLines.at(isl).id;
 
 						for(unsigned int itl = 0; itl < map.trafficLights.size(); itl++)
 						{
@@ -1532,57 +1536,64 @@ void MappingHelpers::LinkTrafficLightsAndStopLinesV2(RoadNetwork& map)
 	}
 }
 
-void MappingHelpers::FindAdjacentSingleLane(RoadNetwork& map, const int& lane_id, const int& dir,  const double& min_d, const double& max_d)
+void MappingHelpers::FindAdjacentSingleLane(RoadNetwork& map, const OPID& lane_id, const int& dir,  const double& min_d, const double& max_d)
 {
-	Lane* pL =  GetLaneById(lane_id, map);
+	Lane* pL =  map.GetLaneById(lane_id);
+
 	if(pL != nullptr)
 	{
-		for(auto& l: map.roadSegments.at(0).Lanes)
+		for(auto& seg: map.roadSegments)
 		{
-			PlanningHelpers::CalcAngleAndCost(l.points);
+			for(auto& l: seg.Lanes)
+			{
+				PlanningHelpers::CalcAngleAndCost(l.points);
+			}
 		}
 
-		for(auto& l2: map.roadSegments.at(0).Lanes)
+		for(auto& seg: map.roadSegments)
 		{
-			if(pL->id != l2.id)
+			for(auto& l2: seg.Lanes)
 			{
-				for(auto& wp1: pL->points)
+				if(pL->id != l2.id)
 				{
-					RelativeInfo info;
-					PlanningHelpers::GetRelativeInfoLimited(l2.points, wp1, info);
-					double angle_diff = UtilityHNS::UtilityH::AngleBetweenTwoAnglesPositive(info.perp_point.pos.a, wp1.pos.a)*RAD2DEG;
-					if(fabs(info.perp_distance) > min_d && fabs(info.perp_distance) < max_d && !info.bAfter && !info.bBefore && angle_diff < 10)
+					for(auto& wp1: pL->points)
 					{
-						WayPoint* wp2 = &l2.points.at(info.iFront);
-						if(info.perp_distance < 0 && (dir == 0 || dir == 2))
+						RelativeInfo info;
+						PlanningHelpers::GetRelativeInfoLimited(l2.points, wp1, info);
+						double angle_diff = UtilityHNS::UtilityH::AngleBetweenTwoAnglesPositive(info.perp_point.pos.a, wp1.pos.a)*RAD2DEG;
+						if(fabs(info.perp_distance) > min_d && fabs(info.perp_distance) < max_d && !info.bAfter && !info.bBefore && angle_diff < 10)
 						{
-							pL->lane_change = 1;
-							l2.lane_change = 1;
+							WayPoint* wp2 = &l2.points.at(info.iFront);
+							if(info.perp_distance < 0 && (dir == 0 || dir == 2))
+							{
+								pL->lane_change = 1;
+								l2.lane_change = 1;
 
-							wp1.pRight = wp2;
-							wp1.RightPointId = wp2->id;
-							wp1.RightLnId = l2.id;
-							pL->pRightLane = &l2;
+								wp1.pRight = wp2;
+								wp1.RightPointId = wp2->id;
+								wp1.RightLnId = l2.id;
+								pL->pRightLane = &l2;
 
-							wp2->pLeft = &wp1;
-							wp2->LeftPointId = wp1.id;
-							wp2->LeftLnId = pL->id;
-							l2.pLeftLane = pL;
-						}
-						else if(info.perp_distance >= 0 && (dir == 0 || dir == 1))
-						{
-							pL->lane_change = 1;
-							l2.lane_change = 1;
+								wp2->pLeft = &wp1;
+								wp2->LeftPointId = wp1.id;
+								wp2->LeftLnId = pL->id;
+								l2.pLeftLane = pL;
+							}
+							else if(info.perp_distance >= 0 && (dir == 0 || dir == 1))
+							{
+								pL->lane_change = 1;
+								l2.lane_change = 1;
 
-							wp1.pLeft = wp2;
-							wp1.LeftPointId = wp2->id;
-							wp1.LeftLnId = l2.id;
-							pL->pLeftLane = &l2;
+								wp1.pLeft = wp2;
+								wp1.LeftPointId = wp2->id;
+								wp1.LeftLnId = l2.id;
+								pL->pLeftLane = &l2;
 
-							wp2->pRight = &wp1;
-							wp2->RightPointId = wp1.id;
-							wp2->RightLnId = pL->id;
-							l2.pRightLane = pL;
+								wp2->pRight = &wp1;
+								wp2->RightPointId = wp1.id;
+								wp2->RightLnId = pL->id;
+								l2.pRightLane = pL;
+							}
 						}
 					}
 				}
@@ -1593,56 +1604,63 @@ void MappingHelpers::FindAdjacentSingleLane(RoadNetwork& map, const int& lane_id
 
 void MappingHelpers::FindAdjacentLanesV2(RoadNetwork& map, const double& min_d, const double& max_d )
 {
-	if(map.roadSegments.size() == 0) return;
 	//Fix The angle for all lane's waypoints
-
-	for(auto& l: map.roadSegments.at(0).Lanes)
+	for(auto& seg: map.roadSegments)
 	{
-		PlanningHelpers::CalcAngleAndCost(l.points);
+		for(auto& l: seg.Lanes)
+		{
+			PlanningHelpers::CalcAngleAndCost(l.points);
+		}
 	}
 
-	for(auto& l1: map.roadSegments.at(0).Lanes)
+	for(auto& seg1: map.roadSegments)
 	{
-		for(auto& l2: map.roadSegments.at(0).Lanes)
+		for(auto& l1: seg1.Lanes)
 		{
-			if(l1.id != l2.id)
+			for(auto& seg2: map.roadSegments)
 			{
-				for(auto& wp1: l1.points)
+				for(auto& l2: seg2.Lanes)
 				{
-					RelativeInfo info;
-					PlanningHelpers::GetRelativeInfoLimited(l2.points, wp1, info);
-
-					double angle_diff = UtilityHNS::UtilityH::AngleBetweenTwoAnglesPositive(info.perp_point.pos.a, wp1.pos.a)*RAD2DEG;
-					if(fabs(info.perp_distance) > min_d && fabs(info.perp_distance) < max_d && !info.bAfter && !info.bBefore && angle_diff < 10)
+					if(l1.id != l2.id)
 					{
-						l1.lane_change = 1;
-						l2.lane_change = 1;
-
-						WayPoint* wp2 = &l2.points.at(info.iFront);
-
-						if(info.perp_distance < 0)
+						for(auto& wp1: l1.points)
 						{
-							wp1.pRight = wp2;
-							wp1.RightPointId = wp2->id;
-							wp1.RightLnId = l2.id;
-							l1.pRightLane = &l2;
+							RelativeInfo info;
+							PlanningHelpers::GetRelativeInfoLimited(l2.points, wp1, info);
 
-							wp2->pLeft = &wp1;
-							wp2->LeftPointId = wp1.id;
-							wp2->LeftLnId = l1.id;
-							l2.pLeftLane = &l1;
-						}
-						else
-						{
-							wp1.pLeft = wp2;
-							wp1.LeftPointId = wp2->id;
-							wp1.LeftLnId = l2.id;
-							l1.pLeftLane = &l2;
+							double angle_diff = UtilityHNS::UtilityH::AngleBetweenTwoAnglesPositive(info.perp_point.pos.a, wp1.pos.a)*RAD2DEG;
+							if(fabs(info.perp_distance) > min_d && fabs(info.perp_distance) < max_d && !info.bAfter && !info.bBefore && angle_diff < 10)
+							{
+								l1.lane_change = 1;
+								l2.lane_change = 1;
 
-							wp2->pRight = &wp1;
-							wp2->RightPointId = wp1.id;
-							wp2->RightLnId = l1.id;
-							l2.pRightLane = &l1;
+								WayPoint* wp2 = &l2.points.at(info.iFront);
+
+								if(info.perp_distance < 0)
+								{
+									wp1.pRight = wp2;
+									wp1.RightPointId = wp2->id;
+									wp1.RightLnId = l2.id;
+									l1.pRightLane = &l2;
+
+									wp2->pLeft = &wp1;
+									wp2->LeftPointId = wp1.id;
+									wp2->LeftLnId = l1.id;
+									l2.pLeftLane = &l1;
+								}
+								else
+								{
+									wp1.pLeft = wp2;
+									wp1.LeftPointId = wp2->id;
+									wp1.LeftLnId = l2.id;
+									l1.pLeftLane = &l2;
+
+									wp2->pRight = &wp1;
+									wp2->RightPointId = wp1.id;
+									wp2->RightLnId = l1.id;
+									l2.pRightLane = &l1;
+								}
+							}
 						}
 					}
 				}
@@ -1831,33 +1849,35 @@ bool MappingHelpers::IsPointExist(const WayPoint& p, const std::vector<PlannerHN
 
  void MappingHelpers::ConnectLanes(PlannerHNS::RoadNetwork& map)
  {
-	 if(map.roadSegments.size() == 0) return;
 
 	 //Connect next and previous lanes
-	for(auto& l : map.roadSegments.at(0).Lanes)
+	for(auto& seg: map.roadSegments)
 	{
-		for(auto& next_lane_id : l.toIds)
+		for(auto& l : seg.Lanes)
 		{
-			PlannerHNS::Lane* pToLane = GetLaneById(next_lane_id, map);
-
-			if(pToLane == nullptr)
+			for(auto& next_lane_id : l.toIds)
 			{
-				std::cout << "Can't Find toLane: " << next_lane_id << " To connect. " << std::endl;
-			}
-			else
-			{
-				InsertUniqueId(pToLane->fromIds, l.id);
+				PlannerHNS::Lane* pToLane = map.GetLaneById(next_lane_id);
 
-				//Now connect waypoints
-				if(l.points.size() > 0 && pToLane->points.size() > 0)
+				if(pToLane == nullptr)
 				{
-					PlannerHNS::WayPoint* p1 = &l.points.at(l.points.size()-1);
-					PlannerHNS::WayPoint* p2 = &pToLane->points.at(0);
-
-					InsertUniqueId(p1->toIds, p2->id);
-					InsertUniqueId(p2->fromIds, p1->id);
+					std::cout << "Can't Find toLane: " << next_lane_id << " To connect. " << std::endl;
 				}
+				else
+				{
+					InsertUniqueId(pToLane->fromIds, l.id);
 
+					//Now connect waypoints
+					if(l.points.size() > 0 && pToLane->points.size() > 0)
+					{
+						PlannerHNS::WayPoint* p1 = &l.points.at(l.points.size()-1);
+						PlannerHNS::WayPoint* p2 = &pToLane->points.at(0);
+
+						InsertUniqueId(p1->toIds, p2->id);
+						InsertUniqueId(p2->fromIds, p1->id);
+					}
+
+				}
 			}
 		}
 	}
@@ -1865,31 +1885,32 @@ bool MappingHelpers::IsPointExist(const WayPoint& p, const std::vector<PlannerHN
 
  void MappingHelpers::ConnectMissingStopLinesAndLanes(PlannerHNS::RoadNetwork& map)
  {
-	 if(map.roadSegments.size() == 0) return;
-
-	 for(auto& l: map.roadSegments.at(0).Lanes)
+	 for(auto& seg: map.roadSegments)
 	 {
-		 for(auto& sl: l.stopLines)
+		 for(auto& l: seg.Lanes)
 		 {
-			 if(sl.points.size() > 0)
+			 for(auto& sl: l.stopLines)
 			 {
-				 RelativeInfo inf;
-				 int relative_index = 0;
-				 PlanningHelpers::GetRelativeInfo(l.points, sl.points.at(0), inf, relative_index);
-				 if(inf.iBack >= 0 && inf.iBack < l.points.size())
+				 if(sl.points.size() > 0)
 				 {
-					 sl.laneId = l.id;
-					 l.points.at(inf.iBack).stopLineID = sl.id;
-					 InsertUniqueStopLine(map.stopLines, sl);
-				 }
-				 else
-				 {
-					 std::cout << "Can't Assign Stop Line: " <<  sl.id << ", WayPoint Index: " << inf.iBack << ", iFront: " << inf.iFront << std::endl;
+					 RelativeInfo inf;
+					 int relative_index = 0;
+					 PlanningHelpers::GetRelativeInfo(l.points, sl.points.at(0), inf, relative_index);
+					 if(inf.iBack >= 0 && inf.iBack < l.points.size())
+					 {
+						 sl.laneId = l.id;
+						 l.points.at(inf.iBack).stopLineId = sl.id;
+						 InsertUniqueStopLine(map.stopLines, sl);
+					 }
+					 else
+					 {
+						 std::cout << "Can't Assign Stop Line: " <<  sl.id << ", WayPoint Index: " << inf.iBack << ", iFront: " << inf.iFront << std::endl;
+					 }
 				 }
 			 }
-		 }
 
-		 l.stopLines.clear();
+			 l.stopLines.clear();
+		 }
 	 }
  }
 
@@ -1899,7 +1920,7 @@ bool MappingHelpers::IsPointExist(const WayPoint& p, const std::vector<PlannerHN
 	 {
 		 for(auto& sl: map.stopLines)
 		 {
-			 if(sl.id == tl.stopLineID)
+			 if(sl.id == tl.stopLineId)
 			 {
 				 InsertUniqueId(sl.lightIds, tl.id);
 				 break;
@@ -1913,9 +1934,9 @@ bool MappingHelpers::IsPointExist(const WayPoint& p, const std::vector<PlannerHN
 		 {
 			 for(auto& tl: map.trafficLights)
 			 {
-				 if(tl.id == id && tl.stopLineID == 0)
+				 if(tl.id == id && tl.stopLineId == 0)
 				 {
-					 tl.stopLineID = sl.id;
+					 tl.stopLineId = sl.id;
 					 break;
 				 }
 
@@ -1930,9 +1951,9 @@ bool MappingHelpers::IsPointExist(const WayPoint& p, const std::vector<PlannerHN
 	{
 		for(auto& ts: map.signs)
 		{
-			if(ts.id == sl.stopSignID || ts.groupID == sl.stopSignID)
+			if(ts.id == sl.stopSignId || ts.groupID == sl.stopSignId)
 			{
-				ts.stopLineID = sl.id;
+				ts.stopLineId = sl.id;
 				break;
 			}
 		}

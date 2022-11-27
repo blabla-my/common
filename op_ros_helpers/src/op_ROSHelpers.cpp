@@ -676,36 +676,39 @@ void ROSHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(const Planne
 
 	if(show_connections && map.roadSegments.size() > 0)
 	{
-		for(auto l: map.roadSegments.at(0).Lanes)
+		for(auto& seg: map.roadSegments)
 		{
-			PlanningHelpers::CalcAngleAndCost(l.points);
-			for(auto& p: l.points)
+			for(auto l: seg.Lanes)
 			{
-				marker_id++;
-				visualization_msgs::Marker mkr_l;
-				mkr_l = PlannerHNS::ROSHelpers::CreateGenMarker(p.pos.x,p.pos.y,p.pos.z,p.pos.a, 0.7,1,0.5,1.0,marker_id,"road_network_vector_map", visualization_msgs::Marker::ARROW);
-				mkr_l.scale.y = 0.2;
-				mkr_l.scale.z = 0.2;
-				mkr_l.color.a = 0.25;
-				markerArray.markers.push_back(mkr_l);
-				if(p.LeftPointId > 0)
+				PlanningHelpers::CalcAngleAndCost(l.points);
+				for(auto& p: l.points)
 				{
 					marker_id++;
-					mkr_l = PlannerHNS::ROSHelpers::CreateGenMarker(p.pos.x,p.pos.y,p.pos.z,p.pos.a+M_PI_2, 0.7,0.2,0.5,1.0,marker_id,"road_network_vector_map", visualization_msgs::Marker::ARROW);
+					visualization_msgs::Marker mkr_l;
+					mkr_l = PlannerHNS::ROSHelpers::CreateGenMarker(p.pos.x,p.pos.y,p.pos.z,p.pos.a, 0.7,1,0.5,1.0,marker_id,"road_network_vector_map", visualization_msgs::Marker::ARROW);
 					mkr_l.scale.y = 0.2;
 					mkr_l.scale.z = 0.2;
 					mkr_l.color.a = 0.25;
 					markerArray.markers.push_back(mkr_l);
-				}
+					if(p.LeftPointId > 0)
+					{
+						marker_id++;
+						mkr_l = PlannerHNS::ROSHelpers::CreateGenMarker(p.pos.x,p.pos.y,p.pos.z,p.pos.a+M_PI_2, 0.7,0.2,0.5,1.0,marker_id,"road_network_vector_map", visualization_msgs::Marker::ARROW);
+						mkr_l.scale.y = 0.2;
+						mkr_l.scale.z = 0.2;
+						mkr_l.color.a = 0.25;
+						markerArray.markers.push_back(mkr_l);
+					}
 
-				if(p.RightPointId > 0)
-				{
-					marker_id++;
-					mkr_l = PlannerHNS::ROSHelpers::CreateGenMarker(p.pos.x,p.pos.y,p.pos.z,p.pos.a-M_PI_2, 0.7,0.2,0.5,1.0,marker_id,"road_network_vector_map", visualization_msgs::Marker::ARROW);
-					mkr_l.scale.y = 0.2;
-					mkr_l.scale.z = 0.2;
-					mkr_l.color.a = 0.25;
-					markerArray.markers.push_back(mkr_l);
+					if(p.RightPointId > 0)
+					{
+						marker_id++;
+						mkr_l = PlannerHNS::ROSHelpers::CreateGenMarker(p.pos.x,p.pos.y,p.pos.z,p.pos.a-M_PI_2, 0.7,0.2,0.5,1.0,marker_id,"road_network_vector_map", visualization_msgs::Marker::ARROW);
+						mkr_l.scale.y = 0.2;
+						mkr_l.scale.z = 0.2;
+						mkr_l.color.a = 0.25;
+						markerArray.markers.push_back(mkr_l);
+					}
 				}
 			}
 		}
@@ -1877,7 +1880,7 @@ void ROSHelpers::ConvertFromLocalLaneToAutowareLane(const std::vector<PlannerHNS
 
 		wp.twist.twist.linear.x = path.at(i).v;
 		wp.lane_id = path.at(i).laneId;
-		wp.stop_line_id = path.at(i).stopLineID;
+		wp.stop_line_id = path.at(i).stopLineId;
 		wp.left_lane_id = path.at(i).LeftPointId;
 		wp.right_lane_id = path.at(i).RightPointId;
 		wp.time_cost = path.at(i).timeCost;
@@ -1949,7 +1952,7 @@ void ROSHelpers::ConvertFromAutowareLaneToLocalLane(const autoware_msgs::Lane& t
 
 		wp.gid = trajectory.waypoints.at(i).gid;
 		wp.laneId = trajectory.waypoints.at(i).lane_id;
-		wp.stopLineID = trajectory.waypoints.at(i).stop_line_id;
+		wp.stopLineId = trajectory.waypoints.at(i).stop_line_id;
 		wp.LeftPointId = trajectory.waypoints.at(i).left_lane_id;
 		wp.RightPointId = trajectory.waypoints.at(i).right_lane_id;
 		wp.timeCost = trajectory.waypoints.at(i).time_cost;

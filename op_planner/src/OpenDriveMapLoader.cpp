@@ -135,7 +135,7 @@ void OpenDriveMapLoader::LoadXODR(std::string const &file, RoadNetwork& map)
 					// TODO: Figure out how the waypoints are matched. Issue due to lanes which are super close to each other. 
 					WayPoint wp((map.stopLines.at(isl).points.at(0).pos.x+map.stopLines.at(isl).points.at(1).pos.x)/2.0, (map.stopLines.at(isl).points.at(0).pos.y+map.stopLines.at(isl).points.at(1).pos.y)/2.0, (map.stopLines.at(isl).points.at(0).pos.z+map.stopLines.at(isl).points.at(1).pos.z)/2.0, (map.stopLines.at(isl).points.at(0).pos.a+map.stopLines.at(isl).points.at(1).pos.a)/2.0);
 					// WayPoint wp( map.stopLines.at(isl).points.at(0).pos.x, map.stopLines.at(isl).points.at(0).pos.y, map.stopLines.at(isl).points.at(0).pos.z, map.stopLines.at(isl).points.at(0).pos.a );
-					map.roadSegments.at(rs).Lanes.at(i).points.at(PlanningHelpers::GetClosestNextPointIndexFast(map.roadSegments.at(rs).Lanes.at(i).points, wp)).stopLineID = map.stopLines.at(isl).id;
+					map.roadSegments.at(rs).Lanes.at(i).points.at(PlanningHelpers::GetClosestNextPointIndexFast(map.roadSegments.at(rs).Lanes.at(i).points, wp)).stopLineId = map.stopLines.at(isl).id;
 					// std::cout << " >> Added Stop Line " << map.stopLines.at(isl).id << " to Waypoint." << std::endl;
 				}
 			}
@@ -958,11 +958,11 @@ std::vector<TrafficLight> OpenDriveMapLoader::GetTrafficLightsList(const opendri
 									if(laneId != 0)
 									{										
 										tl.laneIds.push_back(10 + road.attributes.id * 10 + laneId);
-										tl.stopLineID = tl.id;
+										tl.stopLineId = tl.id;
 
-										if(tl.laneIds.size() > 0 && tl.stopLineID != 0)
+										if(tl.laneIds.size() > 0 && tl.stopLineId != 0)
 										{
-											ROS_INFO("Found %d Lanes and Stop Line %d for traffic Light: %d", tl.laneIds.size(), tl.stopLineID, tl.id);
+											ROS_INFO("Found %d Lanes and Stop Line %d for traffic Light: %d", tl.laneIds.size(), tl.stopLineId, tl.id);
 										}else{
 											ROS_FATAL("No Lanes and Stop Line found for Traffic Light: %d", tl.id);
 										}

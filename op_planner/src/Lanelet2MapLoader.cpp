@@ -279,7 +279,7 @@ void Lanelet2MapLoader::FromLaneletToRoadNetwork(lanelet::LaneletMapPtr l2_map, 
 							lanelet::ConstLineString3d stop_line_points = traffic_sign_sl.at(i_sl);
 							PlannerHNS::StopLine sl;
 							sl.id = stop_line_points.id();
-							sl.stopSignID = ts->id();
+							sl.stopSignId = ts->id();
 							CreateWayPointsFromLineString(map, sl.points, stop_line_points, proj);
 							l.stopLines.push_back(sl);
 							//PlannerHNS::MappingHelpers::InsertUniqueStopLine(map.stopLines, sl);
@@ -529,7 +529,7 @@ std::vector<PlannerHNS::TrafficLight> Lanelet2MapLoader::CreateTrafficLightsFrom
 			PlannerHNS::TrafficLight tl;
 			tl.id = pt.id();
 			tl.groupID = traffic_light_group_id;
-			tl.stopLineID = stop_line_id;
+			tl.stopLineId = stop_line_id;
 			tl.pose.pos.x = pt.x();
 			tl.pose.pos.y = pt.y();
 			tl.pose.pos.z = pt.z();
@@ -601,7 +601,7 @@ std::vector<PlannerHNS::TrafficLight> Lanelet2MapLoader::CreateTrafficLightsFrom
 					PlannerHNS::TrafficLight tl;
 					tl.id = pt.id();
 					tl.groupID = traffic_light_group_id;
-					tl.stopLineID = stop_line_id;
+					tl.stopLineId = stop_line_id;
 					tl.pose.pos.x = pt.x();
 					tl.pose.pos.y = pt.y();
 					tl.pose.pos.z = pt.z();

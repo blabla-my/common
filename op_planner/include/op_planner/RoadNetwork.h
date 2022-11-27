@@ -14,10 +14,20 @@
 #include "op_utility/UtilityH.h"
 #include "float.h"
 
+//#if __GNUC__
+//#if __x86_64__ || __ppc64__
+//#define ENVIRONMENT64
+//#else
+//#define ENVIRONMENT32
+//#endif
+//#endif
+
 #define OPENPLANNER_ENABLE_LOGS
 
 namespace PlannerHNS
 {
+
+typedef int OPID;
 
 enum MAP_TARGET_PROJECTION
 {
@@ -296,7 +306,7 @@ public:
 class MapItem
 {
 public:
-  int id;
+  OPID id;
   GPSPoint sp; //start point
   GPSPoint ep; // end point
   GPSPoint center;
@@ -307,7 +317,7 @@ public:
   std::vector<GPSPoint> polygon;
 
 
-  MapItem(int ID, GPSPoint start, GPSPoint end, double curvature, double width, double length, std::string objName)
+  MapItem(OPID ID, GPSPoint start, GPSPoint end, double curvature, double width, double length, std::string objName)
   {
     id = ID;
     sp = start;
@@ -401,7 +411,8 @@ class DrivableArea : public MapItem
 public:
   DRIVABLE_TYPE t; // drivable area type
 
-  DrivableArea(int ID, GPSPoint start, GPSPoint end, double curvature, double width, double length,DRIVABLE_TYPE type, std::string fileName ) : MapItem( ID, start, end, curvature, width, length, fileName)
+  DrivableArea(OPID ID, GPSPoint start, GPSPoint end, double curvature, double width, double length,DRIVABLE_TYPE type, std::string fileName ) :
+	  MapItem( ID, start, end, curvature, width, length, fileName)
   {
     t = type;
   }
@@ -461,43 +472,43 @@ public:
 class WayPoint
 {
 public:
-	GPSPoint	pos;
-	Rotation 	rot;
-	double  	v;
-	double 		cost;
-	double  	distanceCost;
-	double 		curvatureCost;
-	double  	timeCost;
-	double  	totalReward;
-	double  	collisionCost;
-	double 		laneChangeCost;
-	double      width;
-	int 		laneId;
-	int 		id;
-	int 		LeftPointId;
-	int 		RightPointId;
-	int 		LeftLnId;
-	int 		RightLnId;
-	int 		stopLineID;
+	GPSPoint pos;
+	Rotation rot;
+	double v;
+	double cost;
+	double distanceCost;
+	double curvatureCost;
+	double timeCost;
+	double totalReward;
+	double collisionCost;
+	double laneChangeCost;
+	double width;
+	OPID laneId;
+	OPID id;
+	OPID LeftPointId;
+	OPID RightPointId;
+	OPID LeftLnId;
+	OPID RightLnId;
+	OPID stopLineId;
+	OPID boundaryId;
 	CustomBehaviorType custom_type;
 	DIRECTION_TYPE bDir;
 	STATE_TYPE	state;
 	BEH_STATE_TYPE beh_state;
-	int 		iOriginalIndex;
-	int boundaryId;
+	int iOriginalIndex;
 
 	Lane* pLane;
 	Boundary* pBoundary;
 	WayPoint* pLeft;
 	WayPoint* pRight;
-	std::vector<int> 	toIds;
-	std::vector<int> 	fromIds;
+	std::vector<OPID> 	toIds;
+	std::vector<OPID> 	fromIds;
 	std::vector<WayPoint*> pFronts;
 	std::vector<WayPoint*> pBacks;
 	std::vector<std::pair<ACTION_TYPE, double> > actionCost;
 
-	int			originalMapID;
-	int			gid;
+	OPID originalMapID;
+	OPID gid;
 
 	WayPoint()
 	{
@@ -520,7 +531,7 @@ public:
 		totalReward = 0;
 		collisionCost = 0;
 		laneChangeCost = 0;
-		stopLineID = -1;
+		stopLineId = -1;
 		custom_type = CUSTOM_AVOIDANCE_ENABLED;
 		state = INITIAL_STATE;
 		beh_state = BEH_STOPPING_STATE;
@@ -559,7 +570,7 @@ public:
 		totalReward = 0;
 		collisionCost = 0;
 		laneChangeCost = 0;
-		stopLineID = -1;
+		stopLineId = -1;
 		iOriginalIndex = 0;
 		state = INITIAL_STATE;
 		beh_state = BEH_STOPPING_STATE;
@@ -568,6 +579,16 @@ public:
 		originalMapID = -1;
 		boundaryId = -1;
 		width = 0;
+	}
+
+	void clearPointers()
+	{
+		this->pFronts.clear();
+		this->pBacks.clear();
+		this->pBoundary = nullptr;
+		this->pLane = nullptr;
+		this->pLeft = nullptr;
+		this->pRight = nullptr;
 	}
 };
 
@@ -618,14 +639,19 @@ public:
 		roadId =0;
 		pRoad = nullptr;
 	}
+
+	void clearPointers()
+	{
+		this->pRoad = nullptr;
+	}
 };
 
 class Curb
 {
 public:
-	int id;
-	int laneId;
-	int roadId;
+	OPID id;
+	OPID laneId;
+	OPID roadId;
 	double height;
 	double width;
 	std::vector<WayPoint> points;
@@ -642,16 +668,22 @@ public:
 		pLane = nullptr;
 		pRoad = nullptr;
 	}
+
+	void clearPointers()
+	{
+		this->pLane = nullptr;
+		this->pRoad = nullptr;
+	}
 };
 
 class Crossing
 {
 public:
-	int id;
-	int roadId;
-	int boundaryId;
+	OPID id;
+	OPID roadId;
+	OPID boundaryId;
 	std::vector<WayPoint> points; // the crossing boundary
-	std::vector<int> markings;
+	std::vector<OPID> markings;
 	RoadSegment* pRoad;
 
 	Crossing()
@@ -661,20 +693,25 @@ public:
 		roadId =0;
 		pRoad = nullptr;
 	}
+
+	void clearPointers()
+	{
+		this->pRoad = nullptr;
+	}
 };
 
 class StopLine
 {
 public:
-	int id;
-	int laneId;
-	std::vector<int> laneIds;
-	int roadId;
-	std::vector<int> lightIds;
-	int stopSignID;
+	OPID id;
+	OPID laneId;
+	std::vector<OPID> laneIds;
+	OPID roadId;
+	std::vector<OPID> lightIds;
+	OPID stopSignId;
 	std::vector<WayPoint> points;
 	Lane* pLane;
-	int linkID;
+	OPID linkID;
 
 	RoadSegment * pRoad;
 
@@ -684,18 +721,24 @@ public:
 		laneId =0;
 		roadId =0;
 		pLane = nullptr;
-		stopSignID = -1;
+		stopSignId = -1;
 		linkID = 0;
 		pRoad = nullptr;
+	}
+
+	void clearPointers()
+	{
+		this->pLane = nullptr;
+		this->pRoad = nullptr;
 	}
 };
 
 class WaitingLine
 {
 public:
-	int id;
-	int laneId;
-	int roadId;
+	OPID id;
+	OPID laneId;
+	OPID roadId;
 	std::vector<WayPoint> points;
 	Lane* pLane;
 	RoadSegment * pRoad;
@@ -708,16 +751,22 @@ public:
 		pLane = nullptr;
 		pRoad = nullptr;
 	}
+
+	void clearPointers()
+	{
+		this->pRoad = nullptr;
+		this->pLane = nullptr;
+	}
 };
 
 class TrafficSign
 {
 public:
-	int id;
-	std::vector<int> laneIds;
-	int roadId;
-	int groupID;
-	int stopLineID;
+	OPID id;
+	std::vector<OPID> laneIds;
+	OPID roadId;
+	OPID groupID;
+	OPID stopLineId;
 	double horizontal_angle;
 	double vertical_angle;
 	WayPoint pose;
@@ -741,7 +790,7 @@ public:
 		id    		= 0;
 		roadId		= 0;
 		groupID     = 0;
-		stopLineID  = 0;
+		stopLineId  = 0;
 		signType  	= UNKNOWN_SIGN;
 		value		= 0;
 		fromValue	= 0;
@@ -751,20 +800,27 @@ public:
 		vertical_angle = 0;
 		pRoad = nullptr;
 	}
+
+	void clearPointers()
+	{
+		this->pLanes.clear();
+		this->pRoad = nullptr;
+		this->pLane = nullptr;
+	}
 };
 
 class TrafficLight
 {
 public:
-	int id;
+	OPID id;
 	WayPoint pose;
 	TRAFFIC_LIGHT_TYPE lightType;
 	double stoppingDistance;
-	std::vector<int> laneIds;
+	std::vector<OPID> laneIds;
 	std::vector<Lane*> pLanes;
-	int linkID;
-	int stopLineID; // for lanelet2 matching
-	int groupID;
+	OPID linkID;
+	OPID stopLineId; // for lanelet2 matching
+	OPID groupID;
 	double horizontal_angle;
 	double vertical_angle;
 
@@ -779,11 +835,11 @@ public:
 		id 			= 0;
 		lightType	= GREEN_LIGHT;
 		linkID 		= 0;
-		stopLineID  = 0;
+		stopLineId  = 0;
 		pRoad = nullptr;
 	}
 
-	bool CheckLane(const int& laneId)
+	bool CheckLane(const OPID& laneId)
 	{
 		for(unsigned int i=0; i < laneIds.size(); i++)
 		{
@@ -792,14 +848,20 @@ public:
 		}
 		return false;
 	}
+
+	void clearPointers()
+	{
+		this->pLanes.clear();
+		this->pRoad = nullptr;
+	}
 };
 
 class Marking
 {
 public:
-	int id;
-	int laneId;
-	int roadId;
+	OPID id;
+	OPID laneId;
+	OPID roadId;
 	MARKING_TYPE  mark_type;
 	MARKING_COLOR mark_color;
 	WayPoint center;
@@ -820,26 +882,31 @@ public:
 		width = 0;
 		pRoad = nullptr;
 	}
+
+	void clearPointers()
+	{
+		this->pLane = nullptr;
+	}
 };
 
 class Lane
 {
 public:
-	int id;
-	int roadId;
-	int areaId;
-	int leftLaneId;
-	int rightLaneId;
-	int oppositeLaneId;
-	int fromAreaId;
-	int toAreaId;
-	std::vector<int> fromIds;
-	std::vector<int> toIds;
+	OPID id;
+	OPID roadId;
+	OPID areaId;
+	OPID leftLaneId;
+	OPID rightLaneId;
+	OPID oppositeLaneId;
+	OPID fromAreaId;
+	OPID toAreaId;
+	std::vector<OPID> fromIds;
+	std::vector<OPID> toIds;
 	int num; //lane number in the road segment from left to right
 	double speed;
 	double length;
 	LaneType type;
-	int junctionId;
+	OPID junctionId;
 	double width;
 	int lane_change;
 	std::vector<WayPoint> points;
@@ -878,17 +945,26 @@ public:
 		toAreaId = 0;
 	}
 
+	void clearPointers()
+	{
+		this->fromLanes.clear();
+		this->toLanes.clear();
+		this->pLeftLane = nullptr;
+		this->pRightLane = nullptr;
+		this->pOpposite = nullptr;
+	}
+
 };
 
 class RoadSegment
 {
 public:
-	int id;
-	int junctionID; // -1 for non juntion roads (normal roads)
+	OPID id;
+	OPID junctionID; // -1 for non juntion roads (normal roads)
 	SEGMENT_TYPE roadType;
 	Boundary boundary;
-	std::vector<int> fromIds;
-	std::vector<int> toIds;
+	std::vector<OPID> fromIds;
+	std::vector<OPID> toIds;
 
 	std::vector<RoadSegment*> fromRoads;
 	std::vector<RoadSegment*> toRoads;
@@ -912,6 +988,12 @@ public:
 		roadType = NORMAL_ROAD_SEG;
 	}
 
+	void clearPointers()
+	{
+		this->fromRoads.clear();
+		this->toRoads.clear();
+	}
+
 	Lane* GetLaneByNum(int num)
 	{
 		for(auto& l: Lanes) {
@@ -920,7 +1002,7 @@ public:
 		return nullptr;
 	}
 
-	Lane* GetLaneById(int _id)
+	Lane* GetLaneById(OPID _id)
 	{
 		if(_id <= 0) return nullptr;
 
@@ -934,15 +1016,15 @@ public:
 class Line
 {
 public:
-	int id;
+	OPID id;
 	double width;
 	MARKING_COLOR color;
 	LINE_TYPE type;
 	int original_type;
-	int roadID;
+	OPID roadID;
 	std::vector<WayPoint> points;
-	std::vector<int> left_lane_ids;
-	std::vector<int> right_lane_ids;
+	std::vector<OPID> left_lane_ids;
+	std::vector<OPID> right_lane_ids;
 
 	std::vector<Lane*> left_lanes;
 	std::vector<Lane*> right_lanes;
@@ -959,23 +1041,29 @@ public:
 		original_type = 0;
 		pRoad = nullptr;
 	}
+
+	void clearPointers()
+	{
+		this->left_lanes.clear();
+		this->right_lanes.clear();
+	}
 };
 
 class Connection
 {
 public:
-	int id = -1;
-	int incommingRoadId = -1;
-	int connectingRoadId = -1;
+	OPID id = -1;
+	OPID incommingRoadId = -1;
+	OPID connectingRoadId = -1;
 	bool bConnectedFromStart = true;
-	std::vector<std::pair<int, int> > lane_links; //first(from), second(to)
+	std::vector<std::pair<OPID, OPID> > lane_links; //first(from), second(to)
 
 };
 
 class Junction
 {
 public:
-	int id = -1;
+	OPID id = -1;
 	std::vector<Connection> connections;
 
 	Connection* FindConnection(int connectingRoadId, int incommingRoadId)
@@ -1077,89 +1165,27 @@ public:
 		RoadNetwork::g_max_junction_id = 1;
 	}
 
-	static int g_max_point_id;
-	static int g_max_lane_id;
-	static int g_max_line_id;
-	static int g_max_stop_line_id;
-	static int g_max_traffic_light_id;
-	static int g_max_traffic_sign_id;
-	static int g_max_boundary_area_id;
-	static int g_max_marking_id;
-	static int g_max_curb_id;
-	static int g_max_crossing_id;
-	static int g_max_road_id;
-	static int g_max_junction_id;
+	static OPID g_max_point_id;
+	static OPID g_max_lane_id;
+	static OPID g_max_line_id;
+	static OPID g_max_stop_line_id;
+	static OPID g_max_traffic_light_id;
+	static OPID g_max_traffic_sign_id;
+	static OPID g_max_boundary_area_id;
+	static OPID g_max_marking_id;
+	static OPID g_max_curb_id;
+	static OPID g_max_crossing_id;
+	static OPID g_max_road_id;
+	static OPID g_max_junction_id;
 
-	Lane* GetLaneByWaypointId(const int& wp_id,RoadNetwork& map)
-	{
-		for(auto& seg: map.roadSegments)
-		{
-			for(auto& l: seg.Lanes)
-			{
-				for(auto& p: l.points)
-				{
-					if(p.id == wp_id)
-					{
-						return &l;
-					}
-				}
-			}
-		}
-
-		return nullptr;
-	}
-
-	Lane* GetLaneById(int laneId)
-	{
-		if(laneId <= 0) return nullptr;
-
-		for(auto& seg: roadSegments)
-		{
-			for(auto& l: seg.Lanes) {
-				if(l.id == laneId) return &l;
-			}
-		}
-		return nullptr;
-	}
-
-	RoadSegment* GetSegmentById(int roadId)
-	{
-		if(roadId <= 0) return nullptr;
-
-		for(auto& seg: roadSegments) {
-			if(seg.id == roadId) return &seg;
-		}
-
-		return nullptr;
-	}
-
-	RoadSegment* GetSegmentByLaneId(int laneId)
-	{
-		if(laneId <= 0) return nullptr;
-
-		for(auto& seg: roadSegments) {
-			for(auto& l: seg.Lanes) {
-				if(l.id == laneId) return &seg;
-			}
-		}
-
-		return nullptr;
-	}
-
-	Junction* FindJunction(int connectingRoadId, int incommingRoadId)
-	{
-		for(auto& junc: junctions)
-		{
-			Connection* pConn = junc.FindConnection(connectingRoadId, incommingRoadId);
-
-			if(pConn != nullptr)
-			{
-				return &junc;
-			}
-		}
-
-		return nullptr;
-	}
+	RoadNetwork &operator=(const RoadNetwork &map);
+	int GetNoOfLanes();
+	void ReplaceRoadIdWith(const OPID& old_id, const OPID& id);
+	Lane* GetLaneByWaypointId(const OPID& wp_id);
+	Lane* GetLaneById(const OPID& laneId);
+	RoadSegment* GetSegmentById(const OPID& roadId);
+	RoadSegment* GetSegmentByLaneId(const OPID& laneId);
+	Junction* FindJunction(const OPID& connectingRoadId, const OPID& incommingRoadId);
 };
 
 class VehicleState : public ObjTimeStamp
@@ -1376,19 +1402,19 @@ public:
 	double 				timeToGoBack;
 	double 				distanceToChangeLane;
 	double				timeToChangeLane;
-	int 				currentLaneID;
-	int 				originalLaneID;
-	int 				targetLaneID;
+	OPID 				currentLaneID;
+	OPID 				originalLaneID;
+	OPID 				targetLaneID;
 	bool 				bUpcomingLeft;
 	bool 				bUpcomingRight;
 	bool				bCanChangeLane;
 	bool				bTargetLaneSafe;
 	//-------------------------------------------//
 	//Traffic Lights & Stop Sign
-	int 				currentStopSignID;
-	int 				prevStopSignID;
-	int 				currentTrafficLightID;
-	int 				prevTrafficLightID;
+	OPID 				currentStopSignID;
+	OPID 				prevStopSignID;
+	OPID 				currentTrafficLightID;
+	OPID 				prevTrafficLightID;
 	bool 				bTrafficIsRed; //On , off status
 	//-------------------------------------------//
 	//Swerving
@@ -1751,8 +1777,8 @@ private:
 	std::vector<std::pair<T, std::string> > _enum_str_list;
 	T _default;
 public:
-	EnumString(const T& _default, const std::vector<std::pair<T, std::string> >& list) :
-		_default(_default), _enum_str_list(list){}
+	EnumString(const T& val_default, const std::vector<std::pair<T, std::string> >& list) :
+		_default(val_default), _enum_str_list(list){}
 
 	std::vector<std::pair<T, std::string> > GetEnumList()
 	{
