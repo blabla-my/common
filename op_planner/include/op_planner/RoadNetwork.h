@@ -1273,6 +1273,7 @@ public:
 	bool 	enableTrafficLightBehavior;
 	bool 	enableStopSignBehavior;
 	bool 	enableTimeOutAvoidance;
+	bool 	enableBlockingRolloutsOutOfMap;
 	double 	avoidanceTimeOut;
 
 	bool 	enabTrajectoryVelocities;
@@ -1319,6 +1320,7 @@ public:
 		enableLaneChange = false;
 		enableStopSignBehavior = false;
 		enabTrajectoryVelocities = false;
+		enableBlockingRolloutsOutOfMap = false;
 		minIndicationDistance = 15;
 
 		enableTimeOutAvoidance = false;
